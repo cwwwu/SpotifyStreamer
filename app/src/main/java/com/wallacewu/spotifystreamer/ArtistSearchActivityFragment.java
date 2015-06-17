@@ -19,6 +19,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -38,10 +39,31 @@ import kaaes.spotify.webapi.android.models.Pager;
 public class ArtistSearchActivityFragment extends Fragment {
 
     private ArtistAdapter mArtistsAdapter;
+    private String mSearchString;
     static final public String INTENT_EXTRA_ARTIST_NAME = "ARTIST_NAME";
     static final public String INTENT_EXTRA_ARTIST_ID = "ARTIST_ID";
+    static final public String INSTANCE_STATE_SEARCH_STRING = "SEARCH_STRING";
 
     public ArtistSearchActivityFragment() {
+        mSearchString = "";
+    }
+
+    public void setSearchArtist(String artist) {
+        mSearchString = artist;
+    }
+
+    public String getSearchArtist() {
+        return mSearchString;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(true);
+
+        if (savedInstanceState != null) {
+            savedInstanceState.getString(ArtistSearchActivityFragment.INSTANCE_STATE_SEARCH_STRING);
+        }
     }
 
     @Override
@@ -56,8 +78,9 @@ public class ArtistSearchActivityFragment extends Fragment {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 boolean handled = false;
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    mSearchString = v.getText().toString();
                     FetchArtistTask fetchArtistTask = new FetchArtistTask();
-                    fetchArtistTask.execute(v.getText().toString());
+                    fetchArtistTask.execute(mSearchString);
                     handled = true;
                 }
                 return handled;
@@ -79,6 +102,11 @@ public class ArtistSearchActivityFragment extends Fragment {
                 startActivity(topTracksIntent);
             }
         });
+
+        if (mSearchString.length() > 0) {
+            FetchArtistTask fetchArtistTask = new FetchArtistTask();
+            fetchArtistTask.execute(mSearchString);
+        }
 
         return rootView;
     }
@@ -160,6 +188,12 @@ public class ArtistSearchActivityFragment extends Fragment {
                 for (ArtistInformation artist : artists) {
                     mArtistsAdapter.add(artist);
                 }
+            } else {
+                Toast.makeText(
+                        getActivity().getApplicationContext(),
+                        getString(R.string.artist_not_found),
+                        Toast.LENGTH_LONG)
+                        .show();
             }
         }
     }
