@@ -42,28 +42,15 @@ public class ArtistSearchActivityFragment extends Fragment {
     private String mSearchString;
     static final public String INTENT_EXTRA_ARTIST_NAME = "ARTIST_NAME";
     static final public String INTENT_EXTRA_ARTIST_ID = "ARTIST_ID";
-    static final public String INSTANCE_STATE_SEARCH_STRING = "SEARCH_STRING";
 
     public ArtistSearchActivityFragment() {
         mSearchString = "";
-    }
-
-    public void setSearchArtist(String artist) {
-        mSearchString = artist;
-    }
-
-    public String getSearchArtist() {
-        return mSearchString;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-
-        if (savedInstanceState != null) {
-            savedInstanceState.getString(ArtistSearchActivityFragment.INSTANCE_STATE_SEARCH_STRING);
-        }
     }
 
     @Override

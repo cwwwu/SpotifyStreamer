@@ -13,37 +13,10 @@ import android.widget.EditText;
 
 public class ArtistSearchActivity extends ActionBarActivity {
 
-    private ArtistSearchActivityFragment mSearchActivityFragment;
-    static final private String SEARCH_ACTIVITY_FRAGMENT_TAG = "SEARCH_ACTIVITY_FRAGMENT";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_artist_search);
-
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        mSearchActivityFragment = (ArtistSearchActivityFragment) fragmentManager.findFragmentByTag(
-                ArtistSearchActivity.SEARCH_ACTIVITY_FRAGMENT_TAG);
-
-        if (mSearchActivityFragment == null) {
-            mSearchActivityFragment = new ArtistSearchActivityFragment();
-            fragmentManager.beginTransaction().add(mSearchActivityFragment, ArtistSearchActivity.SEARCH_ACTIVITY_FRAGMENT_TAG)
-                    .commit();
-            if (savedInstanceState != null) {
-                mSearchActivityFragment.setSearchArtist(
-                        savedInstanceState.getString(ArtistSearchActivityFragment.INSTANCE_STATE_SEARCH_STRING,""));
-            }
-        }
-
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        if (mSearchActivityFragment != null) {
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            mSearchActivityFragment.setSearchArtist(preferences.getString(ArtistSearchActivityFragment.INSTANCE_STATE_SEARCH_STRING, ""));
-        }
     }
 
     @Override
@@ -66,11 +39,5 @@ public class ArtistSearchActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle bundle) {
-        super.onSaveInstanceState(bundle);
-        bundle.putString(ArtistSearchActivityFragment.INSTANCE_STATE_SEARCH_STRING, mSearchActivityFragment.getSearchArtist());
     }
 }
