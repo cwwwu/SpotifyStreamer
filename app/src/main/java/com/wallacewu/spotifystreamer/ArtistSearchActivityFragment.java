@@ -17,7 +17,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,9 +41,15 @@ import kaaes.spotify.webapi.android.models.Pager;
 public class ArtistSearchActivityFragment extends Fragment {
 
     private ArtistAdapter mArtistsAdapter;
+    private EditText mSearchEditText;
+    private ListView mArtistList;
+    private LinearLayout mProgressBar;
     private String mSearchString;
     static final public String INTENT_EXTRA_ARTIST_NAME = "ARTIST_NAME";
     static final public String INTENT_EXTRA_ARTIST_ID = "ARTIST_ID";
+
+    static final private String STATE_SEARCH_TEXT = "SEARCH_TEXT";
+    static final private String STATE_COMMITTED_SEARCH_STRING = "COMMITTED_SEARCH_STRING";
 
     public ArtistSearchActivityFragment() {
         mSearchString = "";
@@ -58,9 +66,15 @@ public class ArtistSearchActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_artist_search, container, false);
 
-        EditText searchEditText = (EditText) rootView.findViewById(R.id.search_artist_text);
+        mProgressBar = (LinearLayout) rootView.findViewById(R.id.search_artist_progress_bar);
+        mSearchEditText = (EditText) rootView.findViewById(R.id.search_artist_text);
 
-        searchEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        if (savedInstanceState != null) {
+            String currentSearchString = savedInstanceState.getString(ArtistSearchActivityFragment.STATE_SEARCH_TEXT);
+            mSearchEditText.setText(currentSearchString != null ? currentSearchString : "");
+        }
+
+        mSearchEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 boolean handled = false;
@@ -73,13 +87,20 @@ public class ArtistSearchActivityFragment extends Fragment {
                 return handled;
             }
         });
+        mSearchEditText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                EditText editText = (EditText) v;
+                editText.setText("");
+            }
+        });
 
         mArtistsAdapter = new ArtistAdapter(getActivity(),
                 R.layout.list_item_artist,
                 new ArrayList<ArtistInformation>());
-        ListView artistListView = (ListView) rootView.findViewById(R.id.search_artist_results_list);
-        artistListView.setAdapter(mArtistsAdapter);
-        artistListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mArtistList = (ListView) rootView.findViewById(R.id.search_artist_results_list);
+        mArtistList.setAdapter(mArtistsAdapter);
+        mArtistList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 ArtistInformation artist = mArtistsAdapter.getItem(position);
@@ -90,12 +111,23 @@ public class ArtistSearchActivityFragment extends Fragment {
             }
         });
 
+        if (savedInstanceState != null) {
+            String committedSearch = savedInstanceState.getString(ArtistSearchActivityFragment.STATE_COMMITTED_SEARCH_STRING);
+            mSearchString = committedSearch != null ? committedSearch : "";
+        }
+
         if (mSearchString.length() > 0) {
             FetchArtistTask fetchArtistTask = new FetchArtistTask();
             fetchArtistTask.execute(mSearchString);
         }
 
         return rootView;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putString(ArtistSearchActivityFragment.STATE_SEARCH_TEXT, mSearchEditText.getText().toString());
+        outState.putString(ArtistSearchActivityFragment.STATE_COMMITTED_SEARCH_STRING, mSearchString);
     }
 
     class ArtistInformation {
@@ -143,6 +175,11 @@ public class ArtistSearchActivityFragment extends Fragment {
         private final String LOG_TAG = FetchArtistTask.class.getSimpleName();
 
         @Override
+        protected void onPreExecute() {
+            mProgressBar.setVisibility(View.VISIBLE);
+        }
+
+        @Override
         protected ArrayList<ArtistInformation> doInBackground(String... params) {
             if (params.length == 0)
                 return null;
@@ -170,11 +207,13 @@ public class ArtistSearchActivityFragment extends Fragment {
 
         @Override
         protected void onPostExecute(ArrayList<ArtistInformation> artists) {
+            mProgressBar.setVisibility(View.GONE);
             if (artists.size() > 0) {
                 mArtistsAdapter.clear();
                 for (ArtistInformation artist : artists) {
                     mArtistsAdapter.add(artist);
                 }
+                mArtistList.smoothScrollToPosition(0);
             } else {
                 Toast.makeText(
                         getActivity().getApplicationContext(),
