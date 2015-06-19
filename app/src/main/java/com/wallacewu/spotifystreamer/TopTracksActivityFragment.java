@@ -1,16 +1,17 @@
 package com.wallacewu.spotifystreamer;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -30,11 +31,12 @@ import kaaes.spotify.webapi.android.models.ArtistsPager;
 import kaaes.spotify.webapi.android.models.Image;
 import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
+import retrofit.RetrofitError;
 import retrofit.http.QueryMap;
 
 
 /**
- * A placeholder fragment containing a simple view.
+ * This fragment displays the top ten tracks for a given artist in a list.
  */
 public class TopTracksActivityFragment extends Fragment {
 
@@ -121,6 +123,7 @@ public class TopTracksActivityFragment extends Fragment {
     class FetchTrackTask extends AsyncTask<String, Void, ArrayList<TrackInformation>> {
 
         private final String LOG_TAG = FetchTrackTask.class.getSimpleName();
+        private RetrofitError.Kind mStatus = null;
 
         @Override
         protected ArrayList<TrackInformation> doInBackground(String... params) {
@@ -138,13 +141,22 @@ public class TopTracksActivityFragment extends Fragment {
             Tracks results = spotifyService.getArtistTopTrack(artistId, options);
 
             ArrayList<TrackInformation> tracks = new ArrayList<TrackInformation>();
-            for (Track track : results.tracks) {
-                tracks.add(
-                        new TrackInformation(
-                                track.album.name,
-                                track.name,
-                                (track.album.images.size() > 0) ? track.album.images.get(0) : null)
-                );
+            try {
+                for (Track track : results.tracks) {
+                    tracks.add(
+                            new TrackInformation(
+                                    track.album.name,
+                                    track.name,
+                                    (track.album.images.size() > 0) ? track.album.images.get(0) : null)
+                    );
+                }
+            } catch (RetrofitError error) {
+                if (error.getKind() == RetrofitError.Kind.NETWORK) {
+                    mStatus = RetrofitError.Kind.NETWORK;
+                    return null;
+                } else {
+                    throw error;
+                }
             }
 
             return tracks;
@@ -152,6 +164,25 @@ public class TopTracksActivityFragment extends Fragment {
 
         @Override
         protected void onPostExecute(ArrayList<TrackInformation> tracks) {
+            if (tracks == null && mStatus == RetrofitError.Kind.NETWORK) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setMessage(R.string.network_connectivity_message)
+                        .setPositiveButton(R.string.open_network_settings, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
+                            }
+                        })
+                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                            }
+                        })
+                        .create().show();
+                return;
+            }
+
             if (tracks.size() > 0) {
                 mTracksAdapter.clear();
                 for (TrackInformation track : tracks) {

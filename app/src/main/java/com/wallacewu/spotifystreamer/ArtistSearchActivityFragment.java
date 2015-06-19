@@ -1,10 +1,14 @@
 package com.wallacewu.spotifystreamer;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.sqlite.SQLiteCantOpenDatabaseException;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.media.audiofx.BassBoost;
 import android.os.AsyncTask;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,6 +17,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -33,10 +38,12 @@ import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
 import kaaes.spotify.webapi.android.models.Image;
 import kaaes.spotify.webapi.android.models.Pager;
+import retrofit.RetrofitError;
 
 
 /**
- * A placeholder fragment containing a simple view.
+ * This fragment enables the user to search for an artist and have
+ * the search results show up as a list.
  */
 public class ArtistSearchActivityFragment extends Fragment {
 
@@ -79,6 +86,9 @@ public class ArtistSearchActivityFragment extends Fragment {
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 boolean handled = false;
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    mSearchEditText.clearFocus();
+                    InputMethodManager inputMethodManager = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    inputMethodManager.hideSoftInputFromWindow(mSearchEditText.getWindowToken(), 0);
                     mSearchString = v.getText().toString();
                     FetchArtistTask fetchArtistTask = new FetchArtistTask();
                     fetchArtistTask.execute(mSearchString);
@@ -173,6 +183,7 @@ public class ArtistSearchActivityFragment extends Fragment {
     class FetchArtistTask extends AsyncTask<String, Void, ArrayList<ArtistInformation>> {
 
         private final String LOG_TAG = FetchArtistTask.class.getSimpleName();
+        private RetrofitError.Kind mStatus = null;
 
         @Override
         protected void onPreExecute() {
@@ -186,20 +197,29 @@ public class ArtistSearchActivityFragment extends Fragment {
 
             String searchArtistName = params[0];
 
-            SpotifyApi spotifyApi = new SpotifyApi();
-            SpotifyService spotifyService = spotifyApi.getService();
-            ArtistsPager results = spotifyService.searchArtists(searchArtistName);
-
             ArrayList<ArtistInformation> artists = new ArrayList<ArtistInformation>();
-            for (Artist artist : results.artists.items) {
-                Log.d(LOG_TAG, "Artist name: " + artist.name);
-                Log.d(LOG_TAG, "Artist's spotify id: " + artist.id);
-                artists.add(
-                        new ArtistInformation(
-                                artist.name,
-                                artist.id,
-                                (artist.images.size() > 0) ? artist.images.get(0) : null)
-                );
+            try {
+                SpotifyApi spotifyApi = new SpotifyApi();
+                SpotifyService spotifyService = spotifyApi.getService();
+                ArtistsPager results = spotifyService.searchArtists(searchArtistName);
+
+                for (Artist artist : results.artists.items) {
+                    Log.d(LOG_TAG, "Artist name: " + artist.name);
+                    Log.d(LOG_TAG, "Artist's spotify id: " + artist.id);
+                    artists.add(
+                            new ArtistInformation(
+                                    artist.name,
+                                    artist.id,
+                                    (artist.images.size() > 0) ? artist.images.get(0) : null)
+                    );
+                }
+            } catch (RetrofitError error) {
+                if (error.getKind() == RetrofitError.Kind.NETWORK) {
+                    mStatus = RetrofitError.Kind.NETWORK;
+                    return null;
+                } else {
+                    throw error;
+                }
             }
 
             return artists;
@@ -208,6 +228,25 @@ public class ArtistSearchActivityFragment extends Fragment {
         @Override
         protected void onPostExecute(ArrayList<ArtistInformation> artists) {
             mProgressBar.setVisibility(View.GONE);
+            if (artists == null && mStatus == RetrofitError.Kind.NETWORK) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                builder.setMessage(R.string.network_connectivity_message)
+                        .setPositiveButton(R.string.open_network_settings, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
+                            }
+                        })
+                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                            }
+                        })
+                        .create().show();
+                return;
+            }
+
             if (artists.size() > 0) {
                 mArtistsAdapter.clear();
                 for (ArtistInformation artist : artists) {

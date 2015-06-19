@@ -1,6 +1,8 @@
 package com.wallacewu.spotifystreamer;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -20,7 +22,8 @@ public class TopTracksActivity extends ActionBarActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_top_tracks, menu);
+        // Add menu later, as needed
+        //getMenuInflater().inflate(R.menu.menu_top_tracks, menu);
         return true;
     }
 
