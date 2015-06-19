@@ -4,14 +4,10 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.sqlite.SQLiteCantOpenDatabaseException;
-import android.database.sqlite.SQLiteOpenHelper;
-import android.media.audiofx.BassBoost;
 import android.os.AsyncTask;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,7 +18,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -37,7 +32,6 @@ import kaaes.spotify.webapi.android.SpotifyService;
 import kaaes.spotify.webapi.android.models.Artist;
 import kaaes.spotify.webapi.android.models.ArtistsPager;
 import kaaes.spotify.webapi.android.models.Image;
-import kaaes.spotify.webapi.android.models.Pager;
 import retrofit.RetrofitError;
 
 
@@ -47,20 +41,15 @@ import retrofit.RetrofitError;
  */
 public class ArtistSearchActivityFragment extends Fragment {
 
-    private ArtistAdapter mArtistsAdapter;
-    private EditText mSearchEditText;
-    private ListView mArtistList;
-    private LinearLayout mProgressBar;
-    private String mSearchString;
+    private ArtistAdapter   mArtistsAdapter;
+    private EditText        mSearchEditText;
+    private ListView        mArtistList;
+    private ProgressBar     mProgressBar;
+
+    private ArrayList<ArtistInformation> mArtists = new ArrayList<ArtistInformation>();
+
     static final public String INTENT_EXTRA_ARTIST_NAME = "ARTIST_NAME";
     static final public String INTENT_EXTRA_ARTIST_ID = "ARTIST_ID";
-
-    static final private String STATE_SEARCH_TEXT = "SEARCH_TEXT";
-    static final private String STATE_COMMITTED_SEARCH_STRING = "COMMITTED_SEARCH_STRING";
-
-    public ArtistSearchActivityFragment() {
-        mSearchString = "";
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -73,25 +62,22 @@ public class ArtistSearchActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_artist_search, container, false);
 
-        mProgressBar = (LinearLayout) rootView.findViewById(R.id.search_artist_progress_bar);
+        mProgressBar = (ProgressBar) rootView.findViewById(R.id.search_artist_progress_bar);
         mSearchEditText = (EditText) rootView.findViewById(R.id.search_artist_text);
-
-        if (savedInstanceState != null) {
-            String currentSearchString = savedInstanceState.getString(ArtistSearchActivityFragment.STATE_SEARCH_TEXT);
-            mSearchEditText.setText(currentSearchString != null ? currentSearchString : "");
-        }
 
         mSearchEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                 boolean handled = false;
                 if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                    // Hide keyboard when user presses 'search'
                     mSearchEditText.clearFocus();
                     InputMethodManager inputMethodManager = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
                     inputMethodManager.hideSoftInputFromWindow(mSearchEditText.getWindowToken(), 0);
-                    mSearchString = v.getText().toString();
+
+                    // Obtain artist information
                     FetchArtistTask fetchArtistTask = new FetchArtistTask();
-                    fetchArtistTask.execute(mSearchString);
+                    fetchArtistTask.execute(v.getText().toString());
                     handled = true;
                 }
                 return handled;
@@ -105,9 +91,7 @@ public class ArtistSearchActivityFragment extends Fragment {
             }
         });
 
-        mArtistsAdapter = new ArtistAdapter(getActivity(),
-                R.layout.list_item_artist,
-                new ArrayList<ArtistInformation>());
+        mArtistsAdapter = new ArtistAdapter(getActivity(), R.layout.list_item_artist, mArtists);
         mArtistList = (ListView) rootView.findViewById(R.id.search_artist_results_list);
         mArtistList.setAdapter(mArtistsAdapter);
         mArtistList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -121,25 +105,12 @@ public class ArtistSearchActivityFragment extends Fragment {
             }
         });
 
-        if (savedInstanceState != null) {
-            String committedSearch = savedInstanceState.getString(ArtistSearchActivityFragment.STATE_COMMITTED_SEARCH_STRING);
-            mSearchString = committedSearch != null ? committedSearch : "";
-        }
-
-        if (mSearchString.length() > 0) {
-            FetchArtistTask fetchArtistTask = new FetchArtistTask();
-            fetchArtistTask.execute(mSearchString);
-        }
-
         return rootView;
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        outState.putString(ArtistSearchActivityFragment.STATE_SEARCH_TEXT, mSearchEditText.getText().toString());
-        outState.putString(ArtistSearchActivityFragment.STATE_COMMITTED_SEARCH_STRING, mSearchString);
-    }
-
+    /**
+     * Class that holds the necessary information for an artist.
+     */
     class ArtistInformation {
         public String   name;
         public String   id;
@@ -152,6 +123,10 @@ public class ArtistSearchActivityFragment extends Fragment {
         }
     }
 
+    /**
+     * Custom array adapter that is used to display the list of artists returned
+     * from the Spotify query made.
+     */
     class ArtistAdapter extends ArrayAdapter<ArtistInformation> {
 
         public ArtistAdapter(Context context, int resource, ArrayList<ArtistInformation> artists) {
@@ -173,13 +148,17 @@ public class ArtistSearchActivityFragment extends Fragment {
             if (artist.image != null) {
                 Picasso.with(getContext()).load(artist.image.url).into(artistImageView);
             } else {
-                artistImageView.setImageResource(android.R.color.transparent);
+                artistImageView.setImageResource(R.color.missing_thumbnail);
             }
 
             return view;
         }
     }
 
+    /**
+     * The asynchronous task used to retrieve artist information from Spotify when the user
+     * enters an artist name.
+     */
     class FetchArtistTask extends AsyncTask<String, Void, ArrayList<ArtistInformation>> {
 
         private final String LOG_TAG = FetchArtistTask.class.getSimpleName();
@@ -204,8 +183,6 @@ public class ArtistSearchActivityFragment extends Fragment {
                 ArtistsPager results = spotifyService.searchArtists(searchArtistName);
 
                 for (Artist artist : results.artists.items) {
-                    Log.d(LOG_TAG, "Artist name: " + artist.name);
-                    Log.d(LOG_TAG, "Artist's spotify id: " + artist.id);
                     artists.add(
                             new ArtistInformation(
                                     artist.name,
@@ -228,6 +205,10 @@ public class ArtistSearchActivityFragment extends Fragment {
         @Override
         protected void onPostExecute(ArrayList<ArtistInformation> artists) {
             mProgressBar.setVisibility(View.GONE);
+
+            // Handle network error gracefully by asking the user to check if the device's wireless
+            // settings are okay. The user can go to the wireless settings if he/she opts to do so
+            // from the dialog.
             if (artists == null && mStatus == RetrofitError.Kind.NETWORK) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 builder.setMessage(R.string.network_connectivity_message)

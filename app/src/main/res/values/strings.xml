@@ -5,6 +5,7 @@
     <string name="title_activity_top_tracks">Top 10 Tracks</string>
 
     <string name="artist_not_found">Artist(s) not found. Please try again</string>
+    <string name="no_tracks_found">No tracks found!</string>
 
     <string name="network_connectivity_message">Could not access network. Check wireless settings.</string>
     <string name="open_network_settings">Open wireless settings</string>

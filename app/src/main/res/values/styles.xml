@@ -7,10 +7,10 @@
     
     <style name="SpotifyStreamerActionBar"
         parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
-        <item name="android:background">@color/actionBarSpotifyGreen</item>
+        <item name="android:background">@color/action_bar_spotify_green</item>
 
         <!-- Support library compatibility -->
-        <item name="background">@color/actionBarSpotifyGreen</item>
+        <item name="background">@color/action_bar_spotify_green</item>
     </style>
 
 </resources>

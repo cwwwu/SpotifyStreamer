@@ -1,9 +1,6 @@
 package com.wallacewu.spotifystreamer;
 
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
-import android.support.v4.app.NavUtils;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -12,10 +9,32 @@ import android.view.MenuItem;
 
 public class TopTracksActivity extends ActionBarActivity {
 
+    private TopTracksActivityFragment mTracksFragment;
+    static final private String TRACKS_FRAGMENT_TAG = "TRACKS_FRAGMENT";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_top_tracks);
+
+        // Find the retained fragment on activity restarts
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        mTracksFragment = (TopTracksActivityFragment) fragmentManager.findFragmentByTag(TRACKS_FRAGMENT_TAG);
+
+        if (mTracksFragment == null) {
+            mTracksFragment = new TopTracksActivityFragment();
+            fragmentManager.beginTransaction().add(mTracksFragment, TRACKS_FRAGMENT_TAG).commit();
+            //mTracksFragment.setData(loadMyData());
+        }
+
+        // the data is available getData();
+
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        //mTracksFragement.setData(collectMyLoadedData());
     }
 
 

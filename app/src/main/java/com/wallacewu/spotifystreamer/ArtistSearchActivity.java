@@ -1,23 +1,40 @@
 package com.wallacewu.spotifystreamer;
 
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.EditText;
 
 
 public class ArtistSearchActivity extends ActionBarActivity {
+
+    private ArtistSearchActivityFragment mSearchFragment;
+    static final private String SEARCH_FRAGMENT_TAG = "SEARCH_FRAGMENT";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_artist_search);
+
+        // Find the retained fragment on activity restarts
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        mSearchFragment = (ArtistSearchActivityFragment) fragmentManager.findFragmentByTag(SEARCH_FRAGMENT_TAG);
+
+        if (mSearchFragment == null) {
+            mSearchFragment = new ArtistSearchActivityFragment();
+            fragmentManager.beginTransaction().add(mSearchFragment, SEARCH_FRAGMENT_TAG).commit();
+            //mSearchFragment.setData(loadMyData())
+        }
+
+        //data is available in getData()
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        // store the data in the search artist fragment
+        //mSearchFragment.setData(collectMyLoadedData())
     }
 
     @Override
