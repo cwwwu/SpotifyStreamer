@@ -1,6 +1,6 @@
 package com.wallacewu.spotifystreamer;
 
-import android.support.v4.app.FragmentManager;
+import android.app.FragmentManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -9,7 +9,7 @@ import android.view.MenuItem;
 
 public class ArtistSearchActivity extends ActionBarActivity {
 
-    private ArtistSearchActivityFragment mSearchFragment;
+    private ArtistSearchFragment mSearchFragment;
     static final private String SEARCH_FRAGMENT_TAG = "SEARCH_FRAGMENT";
 
     @Override
@@ -18,11 +18,11 @@ public class ArtistSearchActivity extends ActionBarActivity {
         setContentView(R.layout.activity_artist_search);
 
         // Find the retained fragment on activity restarts
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        mSearchFragment = (ArtistSearchActivityFragment) fragmentManager.findFragmentByTag(SEARCH_FRAGMENT_TAG);
+        FragmentManager fragmentManager = getFragmentManager();
+        mSearchFragment = (ArtistSearchFragment) fragmentManager.findFragmentByTag(SEARCH_FRAGMENT_TAG);
 
         if (mSearchFragment == null) {
-            mSearchFragment = new ArtistSearchActivityFragment();
+            mSearchFragment = new ArtistSearchFragment();
             fragmentManager.beginTransaction().add(mSearchFragment, SEARCH_FRAGMENT_TAG).commit();
             //mSearchFragment.setData(loadMyData())
         }
@@ -41,7 +41,7 @@ public class ArtistSearchActivity extends ActionBarActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         // Add menu later, as needed
-        //getMenuInflater().inflate(R.menu.menu_artist_search, menu);
+        getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 

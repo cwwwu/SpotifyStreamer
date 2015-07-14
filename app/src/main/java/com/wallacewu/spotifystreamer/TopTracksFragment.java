@@ -36,20 +36,19 @@ import retrofit.RetrofitError;
 /**
  * This fragment displays the top ten tracks for a given artist in a list.
  */
-public class TopTracksActivityFragment extends Fragment {
+public class TopTracksFragment extends Fragment {
 
     private ProgressBar     mProgressBar;
     private TextView        mErrorTextView;
     private TrackAdapter    mTracksAdapter;
     private ArrayList<TrackInformation> mTracks = new ArrayList<TrackInformation>();
 
-    public TopTracksActivityFragment() {
+    public TopTracksFragment() {
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);
     }
 
     @Override
@@ -63,14 +62,14 @@ public class TopTracksActivityFragment extends Fragment {
         String artistId = null;
 
         if (intent != null) {
-            if (intent.hasExtra(ArtistSearchActivityFragment.INTENT_EXTRA_ARTIST_NAME)) {
+            if (intent.hasExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME)) {
                 ((ActionBarActivity)getActivity())
                         .getSupportActionBar()
-                        .setSubtitle(intent.getStringExtra(ArtistSearchActivityFragment.INTENT_EXTRA_ARTIST_NAME));
+                        .setSubtitle(intent.getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME));
             }
 
-            if (intent.hasExtra(ArtistSearchActivityFragment.INTENT_EXTRA_ARTIST_ID)) {
-                artistId = intent.getStringExtra(ArtistSearchActivityFragment.INTENT_EXTRA_ARTIST_ID);
+            if (intent.hasExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID)) {
+                artistId = intent.getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID);
             }
         }
 

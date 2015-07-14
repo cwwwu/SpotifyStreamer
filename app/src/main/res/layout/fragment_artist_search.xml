@@ -8,12 +8,12 @@
     android:orientation="vertical">
 
 
-    <EditText
+    <SearchView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/search_artist_text"
-        android:singleLine="true"
-        android:hint="@string/artist_search_hint"
+        android:queryHint="@string/artist_search_hint"
+        android:iconifiedByDefault="false"
         android:imeOptions="actionSearch" />
 
     <FrameLayout

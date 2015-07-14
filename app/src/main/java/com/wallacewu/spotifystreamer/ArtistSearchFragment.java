@@ -1,25 +1,26 @@
 package com.wallacewu.spotifystreamer;
 
 import android.app.AlertDialog;
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.provider.Settings;
-import android.support.v4.app.Fragment;
+import android.app.Fragment;
 import android.os.Bundle;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,22 +40,24 @@ import retrofit.RetrofitError;
  * This fragment enables the user to search for an artist and have
  * the search results show up as a list.
  */
-public class ArtistSearchActivityFragment extends Fragment {
+public class ArtistSearchFragment extends Fragment {
 
     private ArtistAdapter   mArtistsAdapter;
-    private EditText        mSearchEditText;
+    private SearchView      mSearchView;
     private ListView        mArtistList;
     private ProgressBar     mProgressBar;
 
-    private ArrayList<ArtistInformation> mArtists = new ArrayList<ArtistInformation>();
+    private ArrayList<ArtistInformation> mArtists;
 
     static final public String INTENT_EXTRA_ARTIST_NAME = "ARTIST_NAME";
     static final public String INTENT_EXTRA_ARTIST_ID = "ARTIST_ID";
 
+    static final private String BUNDLE_ARTIST_PARCEL_LIST = "ARTISTS";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -63,33 +66,31 @@ public class ArtistSearchActivityFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_artist_search, container, false);
 
         mProgressBar = (ProgressBar) rootView.findViewById(R.id.search_artist_progress_bar);
-        mSearchEditText = (EditText) rootView.findViewById(R.id.search_artist_text);
-
-        mSearchEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        mSearchView = (SearchView) rootView.findViewById(R.id.search_artist_text);
+        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                boolean handled = false;
-                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                    // Hide keyboard when user presses 'search'
-                    mSearchEditText.clearFocus();
-                    InputMethodManager inputMethodManager = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    inputMethodManager.hideSoftInputFromWindow(mSearchEditText.getWindowToken(), 0);
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
 
-                    // Obtain artist information
-                    FetchArtistTask fetchArtistTask = new FetchArtistTask();
-                    fetchArtistTask.execute(v.getText().toString());
-                    handled = true;
-                }
-                return handled;
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                //Hide keyboard when user presses 'search'
+                mSearchView.clearFocus();
+                InputMethodManager inputMethodManager = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputMethodManager.hideSoftInputFromWindow(mSearchView.getWindowToken(), 0);
+
+                FetchArtistTask fetchArtistTask = new FetchArtistTask();
+                fetchArtistTask.execute(query);
+                return true;
             }
         });
-        mSearchEditText.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                EditText editText = (EditText) v;
-                editText.setText("");
-            }
-        });
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(BUNDLE_ARTIST_PARCEL_LIST)) {
+            mArtists = savedInstanceState.getParcelableArrayList(BUNDLE_ARTIST_PARCEL_LIST);
+        } else {
+            mArtists = new ArrayList<>();
+        }
 
         mArtistsAdapter = new ArtistAdapter(getActivity(), R.layout.list_item_artist, mArtists);
         mArtistList = (ListView) rootView.findViewById(R.id.search_artist_results_list);
@@ -108,19 +109,10 @@ public class ArtistSearchActivityFragment extends Fragment {
         return rootView;
     }
 
-    /**
-     * Class that holds the necessary information for an artist.
-     */
-    class ArtistInformation {
-        public String   name;
-        public String   id;
-        public Image    image;
-
-        ArtistInformation(String name, String id, Image image) {
-            this.name = name;
-            this.id = id;
-            this.image = image;
-        }
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArrayList(BUNDLE_ARTIST_PARCEL_LIST, mArtists);
+        super.onSaveInstanceState(outState);
     }
 
     /**
@@ -145,8 +137,8 @@ public class ArtistSearchActivityFragment extends Fragment {
             ImageView artistImageView = (ImageView) view.findViewById(R.id.artist_image_thumbnail);
 
             artistTextView.setText(artist.name);
-            if (artist.image != null) {
-                Picasso.with(getContext()).load(artist.image.url).into(artistImageView);
+            if (artist.imageUrl != null) {
+                Picasso.with(getContext()).load(artist.imageUrl).into(artistImageView);
             } else {
                 artistImageView.setImageResource(R.color.missing_thumbnail);
             }
@@ -187,7 +179,7 @@ public class ArtistSearchActivityFragment extends Fragment {
                             new ArtistInformation(
                                     artist.name,
                                     artist.id,
-                                    (artist.images.size() > 0) ? artist.images.get(0) : null)
+                                    (artist.images.size() > 0) ? artist.images.get(0).url : null)
                     );
                 }
             } catch (RetrofitError error) {

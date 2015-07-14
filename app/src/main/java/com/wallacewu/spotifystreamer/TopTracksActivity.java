@@ -9,7 +9,7 @@ import android.view.MenuItem;
 
 public class TopTracksActivity extends ActionBarActivity {
 
-    private TopTracksActivityFragment mTracksFragment;
+    private TopTracksFragment mTracksFragment;
     static final private String TRACKS_FRAGMENT_TAG = "TRACKS_FRAGMENT";
 
     @Override
@@ -19,10 +19,10 @@ public class TopTracksActivity extends ActionBarActivity {
 
         // Find the retained fragment on activity restarts
         FragmentManager fragmentManager = getSupportFragmentManager();
-        mTracksFragment = (TopTracksActivityFragment) fragmentManager.findFragmentByTag(TRACKS_FRAGMENT_TAG);
+        mTracksFragment = (TopTracksFragment) fragmentManager.findFragmentByTag(TRACKS_FRAGMENT_TAG);
 
         if (mTracksFragment == null) {
-            mTracksFragment = new TopTracksActivityFragment();
+            mTracksFragment = new TopTracksFragment();
             fragmentManager.beginTransaction().add(mTracksFragment, TRACKS_FRAGMENT_TAG).commit();
             //mTracksFragment.setData(loadMyData());
         }
