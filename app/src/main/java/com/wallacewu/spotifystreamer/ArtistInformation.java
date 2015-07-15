@@ -42,7 +42,7 @@ class ArtistInformation implements Parcelable {
         dest.writeString(imageUrl);
     }
 
-    public final Parcelable.Creator<ArtistInformation> CREATOR = new Parcelable.Creator<ArtistInformation>() {
+    public static final Parcelable.Creator<ArtistInformation> CREATOR = new Parcelable.Creator<ArtistInformation>() {
         @Override
         public ArtistInformation createFromParcel(Parcel source) {
             return new ArtistInformation(source);

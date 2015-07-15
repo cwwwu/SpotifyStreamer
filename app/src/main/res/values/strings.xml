@@ -10,4 +10,6 @@
     <string name="network_connectivity_message">Could not access network. Check wireless settings.</string>
     <string name="open_network_settings">Open wireless settings</string>
     <string name="cancel">Cancel</string>
+    <string name="title_activity_media_player">Now Streaming Preview</string>
+    <string name="hello_world">Hello world!</string>
 </resources>

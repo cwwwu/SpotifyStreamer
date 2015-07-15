@@ -18,7 +18,9 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <meta-data android:name="android.app.searchable"
+
+            <meta-data
+                android:name="android.app.searchable"
                 android:resource="@xml/searchable" />
         </activity>
         <activity
@@ -28,6 +30,14 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.wallacewu.spotifystreamer.ArtistSearchActivity" />
+        </activity>
+        <activity
+            android:name=".MediaPlayerActivity"
+            android:label="@string/title_activity_media_player"
+            android:parentActivityName=".TopTracksActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.wallacewu.spotifystreamer.TopTracksActivity" />
         </activity>
     </application>
 

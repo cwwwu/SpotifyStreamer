@@ -12,6 +12,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -27,7 +28,6 @@ import java.util.Map;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
 import kaaes.spotify.webapi.android.SpotifyService;
-import kaaes.spotify.webapi.android.models.Image;
 import kaaes.spotify.webapi.android.models.Track;
 import kaaes.spotify.webapi.android.models.Tracks;
 import retrofit.RetrofitError;
@@ -40,11 +40,19 @@ public class TopTracksFragment extends Fragment {
 
     private ProgressBar     mProgressBar;
     private TextView        mErrorTextView;
+    private ListView        mTrackListView;
     private TrackAdapter    mTracksAdapter;
-    private ArrayList<TrackInformation> mTracks = new ArrayList<TrackInformation>();
+    private ArrayList<TrackInformation> mTracks;
+    private String          mArtistName;
 
-    public TopTracksFragment() {
-    }
+    static final public String INTENT_EXTRA_ARTIST_NAME = "ARTIST_NAME";
+    static final public String INTENT_EXTRA_TRACK_NAME = "TRACK_NAME";
+    static final public String INTENT_EXTRA_ALBUM_NAME = "ALBUM_NAME";
+    static final public String INTENT_EXTRA_ALBUM_IMAGE_URL = "ALBUM_IMAGE_URL";
+    static final public String INTENT_EXTRA_TRACK_PREVIEW_URL = "TRACK_PREVIEW_URL";
+    static final public String INTENT_EXTRA_TRACK_INFO = "TRACK_INFO";
+
+    static final private String BUNDLE_TRACKS_PARCEL_LIST = "TRACKS";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -60,12 +68,11 @@ public class TopTracksFragment extends Fragment {
 
         Intent intent   = getActivity().getIntent();
         String artistId = null;
+        mArtistName = "Unknown artist";
 
         if (intent != null) {
             if (intent.hasExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME)) {
-                ((ActionBarActivity)getActivity())
-                        .getSupportActionBar()
-                        .setSubtitle(intent.getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME));
+                mArtistName = intent.getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME);
             }
 
             if (intent.hasExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID)) {
@@ -73,9 +80,30 @@ public class TopTracksFragment extends Fragment {
             }
         }
 
+        ((ActionBarActivity)getActivity())
+                .getSupportActionBar()
+                .setSubtitle(intent.getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME));
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(BUNDLE_TRACKS_PARCEL_LIST)) {
+            mTracks = savedInstanceState.getParcelableArrayList(BUNDLE_TRACKS_PARCEL_LIST);
+        } else {
+            mTracks = new ArrayList<>();
+        }
+
         mTracksAdapter = new TrackAdapter(getActivity(), R.layout.list_item_artist, mTracks);
-        ListView trackListView = (ListView) rootView.findViewById(R.id.top_ten_tracks_list);
-        trackListView.setAdapter(mTracksAdapter);
+        mTrackListView = (ListView) rootView.findViewById(R.id.top_ten_tracks_list);
+        mTrackListView.setAdapter(mTracksAdapter);
+
+        mTrackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                TrackInformation track = mTracksAdapter.getItem(position);
+                Intent mediaPlayerIntent = new Intent(getActivity(), MediaPlayerActivity.class)
+                        .putExtra(INTENT_EXTRA_TRACK_INFO, track)
+                        .putExtra(INTENT_EXTRA_ARTIST_NAME, mArtistName);
+                startActivity(mediaPlayerIntent);
+            }
+        });
 
         if (intent != null && artistId != null && mTracks.isEmpty()) {
             FetchTrackTask fetchTrackTask = new FetchTrackTask();
@@ -85,19 +113,10 @@ public class TopTracksFragment extends Fragment {
         return rootView;
     }
 
-    /**
-     * Class that holds the necessary information for a track.
-     */
-    class TrackInformation {
-        public String   albumName;
-        public String   trackName;
-        public Image    albumImage;
-
-        TrackInformation(String albumName, String trackName, Image albumImage) {
-            this.albumName = albumName;
-            this.trackName = trackName;
-            this.albumImage = albumImage;
-        }
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArrayList(BUNDLE_TRACKS_PARCEL_LIST, mTracks);
+        super.onSaveInstanceState(outState);
     }
 
     /**
@@ -124,8 +143,8 @@ public class TopTracksFragment extends Fragment {
 
             albumTextView.setText(track.albumName);
             trackTextView.setText(track.trackName);
-            if (track.albumImage != null) {
-                Picasso.with(getContext()).load(track.albumImage.url).into(albumImageView);
+            if (track.albumImageUrl != null) {
+                Picasso.with(getContext()).load(track.albumImageUrl).into(albumImageView);
             } else {
                 albumImageView.setImageResource(R.color.missing_thumbnail);
             }
@@ -170,7 +189,8 @@ public class TopTracksFragment extends Fragment {
                             new TrackInformation(
                                     track.album.name,
                                     track.name,
-                                    (track.album.images.size() > 0) ? track.album.images.get(0) : null)
+                                    (track.album.images.size() > 0) ? track.album.images.get(0).url : null,
+                                    track.preview_url)
                     );
                 }
             } catch (RetrofitError error) {
