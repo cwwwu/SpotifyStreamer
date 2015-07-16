@@ -46,12 +46,8 @@ public class TopTracksFragment extends Fragment {
     private String          mArtistName;
 
     static final public String INTENT_EXTRA_ARTIST_NAME = "ARTIST_NAME";
-    static final public String INTENT_EXTRA_TRACK_NAME = "TRACK_NAME";
-    static final public String INTENT_EXTRA_ALBUM_NAME = "ALBUM_NAME";
-    static final public String INTENT_EXTRA_ALBUM_IMAGE_URL = "ALBUM_IMAGE_URL";
-    static final public String INTENT_EXTRA_TRACK_PREVIEW_URL = "TRACK_PREVIEW_URL";
     static final public String INTENT_EXTRA_TRACK_INFO = "TRACK_INFO";
-
+    static final public String ARTIST_INFO = "ARTIST_INFO";
     static final private String BUNDLE_TRACKS_PARCEL_LIST = "TRACKS";
 
     @Override
@@ -66,23 +62,19 @@ public class TopTracksFragment extends Fragment {
         mProgressBar = (ProgressBar) rootView.findViewById(R.id.top_tracks_progress_bar);
         mErrorTextView = (TextView) rootView.findViewById(R.id.top_tracks_no_tracks);
 
-        Intent intent   = getActivity().getIntent();
+        Bundle args = getArguments();
         String artistId = null;
         mArtistName = "Unknown artist";
 
-        if (intent != null) {
-            if (intent.hasExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME)) {
-                mArtistName = intent.getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME);
-            }
-
-            if (intent.hasExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID)) {
-                artistId = intent.getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID);
-            }
+        if (args != null) {
+            mArtistName = args.getString(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME, "Unknown artist");
+            artistId = args.getString(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID, null);
         }
 
-        ((ActionBarActivity)getActivity())
-                .getSupportActionBar()
-                .setSubtitle(intent.getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME));
+
+//        ((ActionBarActivity)getActivity())
+//                .getSupportActionBar()
+//                .setSubtitle(intent.getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME));
 
         if (savedInstanceState != null && savedInstanceState.containsKey(BUNDLE_TRACKS_PARCEL_LIST)) {
             mTracks = savedInstanceState.getParcelableArrayList(BUNDLE_TRACKS_PARCEL_LIST);
@@ -105,7 +97,7 @@ public class TopTracksFragment extends Fragment {
             }
         });
 
-        if (intent != null && artistId != null && mTracks.isEmpty()) {
+        if (args != null && artistId != null && mTracks.isEmpty()) {
             FetchTrackTask fetchTrackTask = new FetchTrackTask();
             fetchTrackTask.execute(artistId);
         }

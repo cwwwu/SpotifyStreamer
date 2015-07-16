@@ -17,17 +17,18 @@ public class TopTracksActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_top_tracks);
 
-        // Find the retained fragment on activity restarts
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        mTracksFragment = (TopTracksFragment) fragmentManager.findFragmentByTag(TRACKS_FRAGMENT_TAG);
+        if (savedInstanceState == null) {
+            Bundle args = new Bundle();
+            args.putString(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME, getIntent().getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME));
+            args.putString(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID, getIntent().getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID));
 
-        if (mTracksFragment == null) {
-            mTracksFragment = new TopTracksFragment();
-            fragmentManager.beginTransaction().add(mTracksFragment, TRACKS_FRAGMENT_TAG).commit();
-            //mTracksFragment.setData(loadMyData());
+            TopTracksFragment topTracksFragment = new TopTracksFragment();
+            topTracksFragment.setArguments(args);
+
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.top_tracks_container, topTracksFragment)
+                    .commit();
         }
-
-        // the data is available getData();
 
     }
 

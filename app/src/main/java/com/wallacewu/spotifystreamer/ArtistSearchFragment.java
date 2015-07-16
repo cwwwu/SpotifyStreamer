@@ -24,6 +24,7 @@ import android.widget.SearchView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.squareup.okhttp.Call;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
@@ -53,6 +54,18 @@ public class ArtistSearchFragment extends Fragment {
     static final public String INTENT_EXTRA_ARTIST_ID = "ARTIST_ID";
 
     static final private String BUNDLE_ARTIST_PARCEL_LIST = "ARTISTS";
+
+    /**
+     * A callback interface that all activities containing this fragment must
+     * implement. This mechanism allows activities to be notified of item
+     * selections.
+     */
+    public interface Callback {
+        /**
+         * DetailFragmentCallback for when an item has been selected.
+         */
+        public void onItemSelected(String artistName, String artistId);
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -99,10 +112,8 @@ public class ArtistSearchFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 ArtistInformation artist = mArtistsAdapter.getItem(position);
-                Intent topTracksIntent = new Intent(getActivity(), TopTracksActivity.class)
-                        .putExtra(INTENT_EXTRA_ARTIST_NAME, artist.name)
-                        .putExtra(INTENT_EXTRA_ARTIST_ID, artist.id);
-                startActivity(topTracksIntent);
+                ((Callback) getActivity()).onItemSelected(artist.name, artist.id);
+
             }
         });
 
