@@ -7,7 +7,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 
-public class ArtistSearchActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity {
 
     private ArtistSearchFragment mSearchFragment;
     static final private String SEARCH_FRAGMENT_TAG = "SEARCH_FRAGMENT";
