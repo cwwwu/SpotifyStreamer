@@ -3,6 +3,7 @@
     package="com.wallacewu.spotifystreamer" >
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:allowBackup="true"
@@ -39,6 +40,8 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.wallacewu.spotifystreamer.TopTracksActivity" />
         </activity>
+        
+        <service android:name=".AudioService" />
     </application>
 
 </manifest>

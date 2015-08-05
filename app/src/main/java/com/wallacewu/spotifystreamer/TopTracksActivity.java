@@ -1,6 +1,7 @@
 package com.wallacewu.spotifystreamer;
 
 import android.support.v4.app.FragmentManager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -18,6 +19,11 @@ public class TopTracksActivity extends ActionBarActivity {
         setContentView(R.layout.activity_top_tracks);
 
         if (savedInstanceState == null) {
+            ActionBar actionBar = this.getSupportActionBar();
+            if (actionBar != null) {
+                actionBar.setSubtitle(getIntent().getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME)); // TODO: handle config change
+            }
+
             Bundle args = new Bundle();
             args.putString(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME, getIntent().getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME));
             args.putString(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID, getIntent().getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID));

@@ -71,11 +71,6 @@ public class TopTracksFragment extends Fragment {
             artistId = args.getString(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID, null);
         }
 
-
-//        ((ActionBarActivity)getActivity())
-//                .getSupportActionBar()
-//                .setSubtitle(intent.getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME));
-
         if (savedInstanceState != null && savedInstanceState.containsKey(BUNDLE_TRACKS_PARCEL_LIST)) {
             mTracks = savedInstanceState.getParcelableArrayList(BUNDLE_TRACKS_PARCEL_LIST);
         } else {

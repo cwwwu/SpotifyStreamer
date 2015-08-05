@@ -2,6 +2,7 @@ package com.wallacewu.spotifystreamer;
 
 import android.app.FragmentManager;
 import android.content.Intent;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -68,6 +69,11 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
     @Override
     public void onItemSelected(String artistName, String artistId) {
         if (mTwoPane) {
+            ActionBar actionBar = this.getSupportActionBar();
+            if (actionBar != null) {
+                actionBar.setSubtitle(artistName); //TODO: handle config change
+            }
+
             Bundle args = new Bundle();
             args.putString(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME, artistName);
             args.putString(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID, artistId);

@@ -1,8 +1,12 @@
 package com.wallacewu.spotifystreamer;
 
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.IBinder;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -22,7 +26,14 @@ import java.io.IOException;
  */
 public class MediaPlayerFragment extends Fragment {
 
-    private MediaPlayer mMediaPlayer;
+//    private MediaPlayer mMediaPlayer;
+
+    private AudioService mAudioService;
+    private Intent mPlayIntent;
+    private boolean mAudioBound = false;
+    private ServiceConnection mAudioConnection;
+
+    String trackPreviewUrl;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -35,7 +46,7 @@ public class MediaPlayerFragment extends Fragment {
         String albumName = "Unknown album";
         String trackName = "No track selected";
         String albumImageUrl = null;
-        String trackPreviewUrl = null;
+        trackPreviewUrl = null;
 
         if (intent != null) {
             TrackInformation trackInformation = intent.getParcelableExtra(TopTracksFragment.INTENT_EXTRA_TRACK_INFO);
@@ -66,17 +77,43 @@ public class MediaPlayerFragment extends Fragment {
         TextView trackTextView = (TextView) rootView.findViewById(R.id.player_track_name);
         trackTextView.setText(trackName);
 
-        mMediaPlayer = new MediaPlayer();
-        mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-        try {
-            mMediaPlayer.setDataSource(trackPreviewUrl);
-            mMediaPlayer.prepare();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        mAudioConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                AudioService.AudioBinder binder = (AudioService.AudioBinder)service;
+                mAudioService = binder.getService();
+                mAudioService.setTrackInfoList(trackPreviewUrl);
+                mAudioBound = true;
+            }
 
-        mMediaPlayer.start();
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                mAudioBound = false;
+            }
+        };
+
+//        mMediaPlayer = new MediaPlayer();
+//        mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+//        try {
+//            mMediaPlayer.setDataSource(trackPreviewUrl);
+//            mMediaPlayer.prepare();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        mMediaPlayer.start();
 
         return rootView;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        if (mPlayIntent == null) {
+            mPlayIntent = new Intent(getActivity(), AudioService.class);
+            getActivity().bindService(mPlayIntent, mAudioConnection, Context.BIND_AUTO_CREATE);
+            getActivity().startService(mPlayIntent);
+        }
     }
 }
