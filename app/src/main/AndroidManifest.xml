@@ -41,7 +41,7 @@
                 android:value="com.wallacewu.spotifystreamer.TopTracksActivity" />
         </activity>
         
-        <service android:name=".AudioService" />
+        <service android:name=".audio.AudioService" />
     </application>
 
 </manifest>

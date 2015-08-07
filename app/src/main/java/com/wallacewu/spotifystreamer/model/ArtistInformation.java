@@ -1,4 +1,4 @@
-package com.wallacewu.spotifystreamer;
+package com.wallacewu.spotifystreamer.model;
 
 
 import android.os.Parcel;
@@ -9,7 +9,7 @@ import android.os.Parcelable;
  *
  * Created by Wallace on 7/14/2015.
  */
-class ArtistInformation implements Parcelable {
+public class ArtistInformation implements Parcelable {
     public String   name;
     public String   id;
     public String   imageUrl;

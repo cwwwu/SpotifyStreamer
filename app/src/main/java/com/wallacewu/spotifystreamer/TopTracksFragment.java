@@ -8,7 +8,6 @@ import android.os.AsyncTask;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
-import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +19,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
+import com.wallacewu.spotifystreamer.model.TrackInformation;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,8 +46,9 @@ public class TopTracksFragment extends Fragment {
     private String          mArtistName;
 
     static final public String INTENT_EXTRA_ARTIST_NAME = "ARTIST_NAME";
-    static final public String INTENT_EXTRA_TRACK_INFO = "TRACK_INFO";
-    static final public String ARTIST_INFO = "ARTIST_INFO";
+    static final public String INTENT_EXTRA_TRACK_LIST = "TRACK_LIST";
+    static final public String INTENT_EXTRA_TRACK_IDX = "TRACK_START_IDX";
+
     static final private String BUNDLE_TRACKS_PARCEL_LIST = "TRACKS";
 
     @Override
@@ -84,9 +85,9 @@ public class TopTracksFragment extends Fragment {
         mTrackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                TrackInformation track = mTracksAdapter.getItem(position);
                 Intent mediaPlayerIntent = new Intent(getActivity(), MediaPlayerActivity.class)
-                        .putExtra(INTENT_EXTRA_TRACK_INFO, track)
+                        .putExtra(INTENT_EXTRA_TRACK_LIST, mTracks)
+                        .putExtra(INTENT_EXTRA_TRACK_IDX, position)
                         .putExtra(INTENT_EXTRA_ARTIST_NAME, mArtistName);
                 startActivity(mediaPlayerIntent);
             }
