@@ -4,7 +4,6 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.database.sqlite.SQLiteCantOpenDatabaseException;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
@@ -15,12 +14,10 @@ import android.util.Log;
 
 import com.wallacewu.spotifystreamer.MainActivity;
 import com.wallacewu.spotifystreamer.R;
-import com.wallacewu.spotifystreamer.model.TrackInformation;
+import com.wallacewu.spotifystreamer.data.TrackInformation;
 
 import java.io.IOException;
 import java.util.ArrayList;
-
-import kaaes.spotify.webapi.android.models.Track;
 
 /**
  * Created by Wallace on 7/15/2015.

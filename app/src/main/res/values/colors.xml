@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="action_bar_spotify_green">#2ebd59</color>
-    <color name="action_bar_spotify_green_dark">#228d42</color>
+    <color name="spotify_green">#2ebd59</color>
+    <color name="spotify_green_dark">#228d42</color>
+    <color name="grey">#cccccc</color>
     <color name="missing_thumbnail">#888888</color>
 </resources>

@@ -19,7 +19,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
-import com.wallacewu.spotifystreamer.model.TrackInformation;
+import com.wallacewu.spotifystreamer.data.TrackInformation;
 
 import java.util.ArrayList;
 import java.util.HashMap;

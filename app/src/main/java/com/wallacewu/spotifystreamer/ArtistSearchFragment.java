@@ -1,6 +1,7 @@
 package com.wallacewu.spotifystreamer;
 
 import android.app.AlertDialog;
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -8,9 +9,14 @@ import android.os.AsyncTask;
 import android.provider.Settings;
 import android.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.view.MenuItemCompat;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -22,7 +28,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
-import com.wallacewu.spotifystreamer.model.ArtistInformation;
+import com.wallacewu.spotifystreamer.data.ArtistInformation;
 
 import java.util.ArrayList;
 
@@ -40,16 +46,20 @@ import retrofit.RetrofitError;
 public class ArtistSearchFragment extends Fragment {
 
     private ArtistAdapter   mArtistsAdapter;
+    private MenuItem        mSearchViewMenuItem;
     private SearchView      mSearchView;
     private ListView        mArtistList;
     private ProgressBar     mProgressBar;
 
     private ArrayList<ArtistInformation> mArtists;
 
+    private int             mPosition = ListView.INVALID_POSITION;
+
     static final public String INTENT_EXTRA_ARTIST_NAME = "ARTIST_NAME";
     static final public String INTENT_EXTRA_ARTIST_ID = "ARTIST_ID";
 
     static final private String BUNDLE_ARTIST_PARCEL_LIST = "ARTISTS";
+    static final private String BUNDLE_SELECTED_POSITION = "POSITION";
 
     /**
      * A callback interface that all activities containing this fragment must
@@ -60,7 +70,7 @@ public class ArtistSearchFragment extends Fragment {
         /**
          * DetailFragmentCallback for when an item has been selected.
          */
-        public void onItemSelected(String artistName, String artistId);
+        void onItemSelected(String artistName, String artistId);
     }
 
     @Override
@@ -75,25 +85,6 @@ public class ArtistSearchFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_artist_search, container, false);
 
         mProgressBar = (ProgressBar) rootView.findViewById(R.id.search_artist_progress_bar);
-        mSearchView = (SearchView) rootView.findViewById(R.id.search_artist_text);
-        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                return false;
-            }
-
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                //Hide keyboard when user presses 'search'
-                mSearchView.clearFocus();
-                InputMethodManager inputMethodManager = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-                inputMethodManager.hideSoftInputFromWindow(mSearchView.getWindowToken(), 0);
-
-                FetchArtistTask fetchArtistTask = new FetchArtistTask();
-                fetchArtistTask.execute(query);
-                return true;
-            }
-        });
 
         if (savedInstanceState != null && savedInstanceState.containsKey(BUNDLE_ARTIST_PARCEL_LIST)) {
             mArtists = savedInstanceState.getParcelableArrayList(BUNDLE_ARTIST_PARCEL_LIST);
@@ -109,16 +100,89 @@ public class ArtistSearchFragment extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 ArtistInformation artist = mArtistsAdapter.getItem(position);
                 ((Callback) getActivity()).onItemSelected(artist.name, artist.id);
-
+                mPosition = position;
             }
         });
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(BUNDLE_SELECTED_POSITION)) {
+            mPosition = savedInstanceState.getInt(BUNDLE_SELECTED_POSITION);
+        }
 
         return rootView;
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        if (mPosition != ListView.INVALID_POSITION) {
+            mArtistList.smoothScrollToPosition(mPosition);
+        }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(final Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.menu_artist_search, menu);
+
+        mSearchViewMenuItem = menu.findItem(R.id.search_artist);
+        mSearchView = (SearchView) mSearchViewMenuItem.getActionView();
+
+        // Automatically show and hide the keyboard when the search view is expanded and collapsed, respectively. In
+        // the case of the search view being expanded, set the focus on the search view.
+        MenuItemCompat.setOnActionExpandListener(mSearchViewMenuItem, new MenuItemCompat.OnActionExpandListener() {
+            @Override
+            public boolean onMenuItemActionExpand(MenuItem item) {
+                mSearchView.requestFocus();
+                mSearchView.requestFocusFromTouch();
+                InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputMethodManager.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT, 0);
+                return true;
+            }
+
+            @Override
+            public boolean onMenuItemActionCollapse(MenuItem item) {
+                InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputMethodManager.hideSoftInputFromWindow(mSearchView.getWindowToken(), 0);
+                return true;
+            }
+        });
+
+        mSearchView.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
+        mSearchView.setQueryHint(getActivity().getString(R.string.artist_search_hint));
+        mSearchView.setFocusable(true);
+        mSearchView.setIconifiedByDefault(false);
+
+        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                //Hide keyboard when user presses 'search'
+                mSearchView.clearFocus();
+                InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                inputMethodManager.hideSoftInputFromWindow(mSearchView.getWindowToken(), 0);
+
+                mSearchViewMenuItem.collapseActionView();
+
+                FetchArtistTask fetchArtistTask = new FetchArtistTask();
+                fetchArtistTask.execute(query);
+                return true;
+            }
+        });
+
+        SearchManager searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
+        mSearchView.setSearchableInfo(searchManager.getSearchableInfo(getActivity().getComponentName()));
+    }
+
+    @Override
     public void onSaveInstanceState(Bundle outState) {
         outState.putParcelableArrayList(BUNDLE_ARTIST_PARCEL_LIST, mArtists);
+        if (mPosition != ListView.INVALID_POSITION) {
+            outState.putInt(BUNDLE_SELECTED_POSITION, mPosition);
+        }
         super.onSaveInstanceState(outState);
     }
 

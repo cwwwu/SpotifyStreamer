@@ -1,4 +1,4 @@
-package com.wallacewu.spotifystreamer.model;
+package com.wallacewu.spotifystreamer.data;
 
 
 import android.os.Parcel;

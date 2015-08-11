@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.SystemClock;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -20,7 +19,7 @@ import android.widget.ToggleButton;
 
 import com.squareup.picasso.Picasso;
 import com.wallacewu.spotifystreamer.audio.AudioService;
-import com.wallacewu.spotifystreamer.model.TrackInformation;
+import com.wallacewu.spotifystreamer.data.TrackInformation;
 import com.wallacewu.spotifystreamer.util.Utils;
 
 import java.util.ArrayList;
@@ -28,8 +27,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
-import kaaes.spotify.webapi.android.models.Track;
 
 
 /**
@@ -148,16 +145,18 @@ public class MediaPlayerFragment extends Fragment {
                 updatePlayerTrackInfo(mAudioService.getCurrentTrackIdx());
             }
         });
-        ToggleButton playButton = (ToggleButton) rootView.findViewById(R.id.player_button_play);
+        ImageButton playButton = (ImageButton) rootView.findViewById(R.id.player_button_play);
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ToggleButton button = (ToggleButton) v;
-                if (button.isChecked()) {
+                ImageButton button = (ImageButton) v;
+                if (mAudioService.isAudioStreaming()) {
                     mAudioService.pausePlayback();
+                    button.setImageDrawable(getActivity().getResources().getDrawable(android.R.drawable.ic_media_pause));
                     stopSeekbarUpdate();
                 } else {
                     mAudioService.playOrResumeTrack();
+                    button.setImageDrawable(getActivity().getResources().getDrawable(android.R.drawable.ic_media_play));
                     scheduleSeekbarUpdate();
                 }
             }

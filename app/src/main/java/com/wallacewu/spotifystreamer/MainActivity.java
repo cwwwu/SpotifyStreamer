@@ -1,10 +1,13 @@
 package com.wallacewu.spotifystreamer;
 
 import android.app.FragmentManager;
+import android.app.SearchManager;
 import android.content.Intent;
+import android.database.sqlite.SQLiteCantOpenDatabaseException;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -12,13 +15,23 @@ import android.view.MenuItem;
 public class MainActivity extends ActionBarActivity implements ArtistSearchFragment.Callback {
 
     private boolean mTwoPane;
+    private String  mSelectedArtist;
     private ArtistSearchFragment mSearchFragment;
     static final private String TOP_TRACKS_FRAGMENT_TAG = "TOP_TRACKS_TAG";
+    static final private String BUNDLE_SELECTED_ARTIST = "SELECTED_ARTIST";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mSelectedArtist = null;
+
         setContentView(R.layout.activity_main);
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(BUNDLE_SELECTED_ARTIST)) {
+            mSelectedArtist = savedInstanceState.getString(BUNDLE_SELECTED_ARTIST);
+            this.getSupportActionBar().setSubtitle(mSelectedArtist);
+        }
 
         if (findViewById(R.id.top_tracks_container) != null) {
             mTwoPane = true;
@@ -44,10 +57,17 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putString(BUNDLE_SELECTED_ARTIST, mSelectedArtist);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         // Add menu later, as needed
         getMenuInflater().inflate(R.menu.main, menu);
+
         return true;
     }
 
@@ -68,10 +88,11 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
 
     @Override
     public void onItemSelected(String artistName, String artistId) {
+        mSelectedArtist = artistName;
         if (mTwoPane) {
             ActionBar actionBar = this.getSupportActionBar();
             if (actionBar != null) {
-                actionBar.setSubtitle(artistName); //TODO: handle config change
+                actionBar.setSubtitle(mSelectedArtist); //TODO: handle config change
             }
 
             Bundle args = new Bundle();

@@ -3,16 +3,16 @@
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat">
         <item name="actionBarStyle">@style/SpotifyStreamerActionBar</item>
-        <item name="colorPrimaryDark">@color/action_bar_spotify_green_dark</item>
+        <item name="colorPrimaryDark">@color/spotify_green_dark</item>
     </style>
     
     <style name="SpotifyStreamerActionBar"
         parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
-        <item name="android:background">@color/action_bar_spotify_green</item>
+        <item name="android:background">@color/spotify_green</item>
 
 
         <!-- Support library compatibility -->
-        <item name="background">@color/action_bar_spotify_green</item>
+        <item name="background">@color/spotify_green</item>
     </style>
 
 </resources>
