@@ -11,8 +11,12 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.wallacewu.spotifystreamer.data.TrackInformation;
 
-public class MainActivity extends ActionBarActivity implements ArtistSearchFragment.Callback {
+import java.util.ArrayList;
+
+
+public class MainActivity extends ActionBarActivity implements ArtistSearchFragment.Callback, TopTracksFragment.Callback {
 
     private boolean mTwoPane;
     private String  mSelectedArtist;
@@ -87,7 +91,7 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
     }
 
     @Override
-    public void onItemSelected(String artistName, String artistId) {
+    public void onArtitstSelected(String artistName, String artistId) {
         mSelectedArtist = artistName;
         if (mTwoPane) {
             ActionBar actionBar = this.getSupportActionBar();
@@ -111,5 +115,18 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
                 .putExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID, artistId);
             startActivity(topTracksIntent);
         }
+    }
+
+    @Override
+    public void onTrackSelected(String artistName, ArrayList<TrackInformation> tracks, int startTrackIdx) {
+        Bundle args = new Bundle();
+        args.putString(TopTracksFragment.INTENT_EXTRA_ARTIST_NAME, artistName);
+        args.putInt(TopTracksFragment.INTENT_EXTRA_TRACK_IDX, startTrackIdx);
+        args.putParcelableArrayList(TopTracksFragment.INTENT_EXTRA_TRACK_LIST, tracks);
+
+        MediaPlayerFragment fragment = new MediaPlayerFragment();
+        fragment.setArguments(args);
+
+        fragment.show(getSupportFragmentManager(), "bla_bla_bla");
     }
 }

@@ -68,9 +68,9 @@ public class ArtistSearchFragment extends Fragment {
      */
     public interface Callback {
         /**
-         * DetailFragmentCallback for when an item has been selected.
+         * Callback for when an item has been selected.
          */
-        void onItemSelected(String artistName, String artistId);
+        void onArtitstSelected(String artistName, String artistId);
     }
 
     @Override
@@ -99,7 +99,7 @@ public class ArtistSearchFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 ArtistInformation artist = mArtistsAdapter.getItem(position);
-                ((Callback) getActivity()).onItemSelected(artist.name, artist.id);
+                ((Callback) getActivity()).onArtitstSelected(artist.name, artist.id);
                 mPosition = position;
             }
         });

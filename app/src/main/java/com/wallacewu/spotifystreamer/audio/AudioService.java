@@ -28,16 +28,22 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
     private MediaPlayer mMediaPlayer;
     private ArrayList<TrackInformation> mTracks;
-    //private String mTracks;
     private int mCurrentTrackIdx;
     private int mTrackTotalDurationMs;
 
     private final IBinder mAudioBind = new AudioBinder();
 
+    static private final int STATE_STOPPED = 0;
+    static private final int STATE_PREPARED = 1;
+    static private final int STATE_PLAYING = 2;
+    static private final int STATE_PAUSED = 3;
+    private int mAudioState;
+
     @Override
     public void onCreate() {
         super.onCreate();
         mCurrentTrackIdx = 0;
+        mAudioState = STATE_STOPPED;
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -50,6 +56,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     @Override
     public void onPrepared(MediaPlayer mp) {
         mTrackTotalDurationMs = mp.getDuration();
+        updateAudioState(STATE_PREPARED);
         Log.d(LOG_TAG, "Total duration of track: " + mp.getDuration() + "ms");
 
         PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),
@@ -76,7 +83,8 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         //notification.flags |= Notification.FLAG_ONGOING_EVENT;
         //notification.setLatestEventInfo(getApplicationContext(), "Sample", "Playing song", pendingIntent);
         startForeground(101, notification);
-        mp.start();
+
+        playOrResumeTrack();
     }
 
     @Override
@@ -120,13 +128,45 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         }
     }
 
+    private void broadcastAudioState(String state) {
+        Intent intent = new Intent();
+        intent.setAction(state);
+        sendBroadcast(intent);
+    }
+
+    private void updateAudioState(int state) {
+        switch (state) {
+            case STATE_STOPPED:
+                broadcastAudioState("ACTION_STOP_PLAYBACK");
+                break;
+            case STATE_PREPARED:
+                broadcastAudioState("ACTION_ONPREPARED_PLAYBACK");
+                break;
+            case STATE_PLAYING:
+                if (mAudioState == STATE_PAUSED) {
+                    broadcastAudioState("ACTION_RESUME_PLAYBACK");
+                } else {
+                    broadcastAudioState("ACTION_START_PLAYBACK");
+                }
+                break;
+            case STATE_PAUSED:
+                broadcastAudioState("ACTION_PAUSE_PLAYBACK");
+                break;
+        }
+
+        mAudioState = state;
+    }
+
     public void prepareTrack(int trackIdx) {
+        mCurrentTrackIdx = trackIdx;
+
         try {
             mMediaPlayer.setDataSource(mTracks.get(trackIdx).trackPreviewUrl);
         }
         catch (IOException e) {
             Log.e("REPLACE ME", "Error setting data source", e);
         }
+
         mMediaPlayer.prepareAsync();
     }
 
@@ -139,7 +179,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public int getTrackTotalDuration() {
-        return mMediaPlayer.getDuration();
+        return mTrackTotalDurationMs;
     }
 
     public int getCurrentPlaybackPosition() {
@@ -152,14 +192,20 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
     public void pausePlayback() {
         mMediaPlayer.pause();
+        updateAudioState(STATE_PAUSED);
     }
 
     public void playOrResumeTrack() {
         mMediaPlayer.start();
+        updateAudioState(STATE_PLAYING);
     }
 
     public boolean isAudioStreaming() {
         return mMediaPlayer.isPlaying();
+    }
+
+    public boolean isStopped() {
+        return mAudioState == STATE_STOPPED;
     }
 
     public void playPreviousTrack() {

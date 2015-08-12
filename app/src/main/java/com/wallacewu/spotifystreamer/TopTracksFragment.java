@@ -49,7 +49,19 @@ public class TopTracksFragment extends Fragment {
     static final public String INTENT_EXTRA_TRACK_LIST = "TRACK_LIST";
     static final public String INTENT_EXTRA_TRACK_IDX = "TRACK_START_IDX";
 
-    static final private String BUNDLE_TRACKS_PARCEL_LIST = "TRACKS";
+    static final private String BUNDLE_TRACKS_PARCEL_LIST = "TRACK_LIST";
+
+    /**
+     * A callback interface that all activities containing this fragment must
+     * implement. This mechanism allows activities to be notified of item
+     * selections.
+     */
+    public interface Callback {
+        /**
+         * Callback for when an item has been selected.
+         */
+        void onTrackSelected(String artistName, ArrayList<TrackInformation> tracks, int startTrackIdx);
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -85,11 +97,7 @@ public class TopTracksFragment extends Fragment {
         mTrackListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent mediaPlayerIntent = new Intent(getActivity(), MediaPlayerActivity.class)
-                        .putExtra(INTENT_EXTRA_TRACK_LIST, mTracks)
-                        .putExtra(INTENT_EXTRA_TRACK_IDX, position)
-                        .putExtra(INTENT_EXTRA_ARTIST_NAME, mArtistName);
-                startActivity(mediaPlayerIntent);
+                ((Callback) getActivity()).onTrackSelected(mArtistName, mTracks, position);
             }
         });
 

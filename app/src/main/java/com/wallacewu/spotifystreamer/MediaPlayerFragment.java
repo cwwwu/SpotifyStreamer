@@ -1,8 +1,10 @@
 package com.wallacewu.spotifystreamer;
 
+import android.support.v4.app.DialogFragment;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Handler;
 import android.os.IBinder;
@@ -32,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class MediaPlayerFragment extends Fragment {
+public class MediaPlayerFragment extends DialogFragment implements AudioStateChangeReceiver.Callback {
 
     private static final long PROGRESS_UPDATE_INTERNAL = 1000;
     private static final long PROGRESS_UPDATE_INITIAL_INTERVAL = 100;
@@ -49,10 +51,13 @@ public class MediaPlayerFragment extends Fragment {
     private SeekBar mSeekBar;
     private TextView mElapsedTimeView;
     private TextView mTotalTimeView;
+    private ImageButton mPlayButton;
 
     private ArrayList<TrackInformation> mTrackList;
     private String mArtistName;
     private int mStartTrackIdx;
+
+    private AudioStateChangeReceiver mAudioStateReceiver;
 
     private final ScheduledExecutorService mExecutorService = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> mScheduleFuture;
@@ -64,10 +69,13 @@ public class MediaPlayerFragment extends Fragment {
         }
     };
 
+    public MediaPlayerFragment() {
+
+    }
+
     private void updateProgress() {
         int currentPosition = mAudioService.getCurrentPlaybackPosition();
-        int trackDuration = mAudioService.getTrackTotalDuration();
-        mSeekBar.setProgress(currentPosition * mSeekBar.getMax() / trackDuration);
+        mSeekBar.setProgress(currentPosition);
         mElapsedTimeView.setText(Utils.formatMillis(mAudioService.getCurrentPlaybackPosition()));
     }
 
@@ -99,21 +107,15 @@ public class MediaPlayerFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_media_player, container, false);
 
-        Intent intent   = getActivity().getIntent();
+        Bundle args = getArguments();
 
         mArtistName = getActivity().getString(R.string.unknown_artist_name);
         mTrackList = null;
 
-        if (intent != null) {
-            mTrackList = intent.getParcelableArrayListExtra(TopTracksFragment.INTENT_EXTRA_TRACK_LIST);
-
-            if (intent.hasExtra(TopTracksFragment.INTENT_EXTRA_ARTIST_NAME)) {
-                mArtistName = intent.getStringExtra(TopTracksFragment.INTENT_EXTRA_ARTIST_NAME);
-            }
-
-            if (intent.hasExtra(TopTracksFragment.INTENT_EXTRA_TRACK_IDX)) {
-                mStartTrackIdx = intent.getIntExtra(TopTracksFragment.INTENT_EXTRA_TRACK_IDX, -1);
-            }
+        if (args != null) {
+            mTrackList = args.getParcelableArrayList(TopTracksFragment.INTENT_EXTRA_TRACK_LIST);
+            mArtistName = args.getString(TopTracksFragment.INTENT_EXTRA_ARTIST_NAME, mArtistName);
+            mStartTrackIdx = args.getInt(TopTracksFragment.INTENT_EXTRA_TRACK_IDX, -1);
         }
 
         mArtistTextView = (TextView) rootView.findViewById(R.id.player_artist_name);
@@ -123,10 +125,11 @@ public class MediaPlayerFragment extends Fragment {
         mAlbumImageView = (ImageView) rootView.findViewById(R.id.player_album_image);
         mTrackTextView = (TextView) rootView.findViewById(R.id.player_track_name);
 
-        updatePlayerTrackInfo(mStartTrackIdx);
-
         mElapsedTimeView = (TextView) rootView.findViewById(R.id.player_current_time);
         mTotalTimeView = (TextView) rootView.findViewById(R.id.player_time_remaining);
+
+        mElapsedTimeView.setText(getActivity().getString(R.string.time_placeholder));
+        mTotalTimeView.setText(getActivity().getString(R.string.time_placeholder));
 
 
         ImageButton previousButton = (ImageButton) rootView.findViewById(R.id.player_button_prev);
@@ -134,7 +137,6 @@ public class MediaPlayerFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 mAudioService.playPreviousTrack();
-                updatePlayerTrackInfo(mAudioService.getCurrentTrackIdx());
             }
         });
         ImageButton nextButton = (ImageButton) rootView.findViewById(R.id.player_button_next);
@@ -142,22 +144,16 @@ public class MediaPlayerFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 mAudioService.playNextTrack();
-                updatePlayerTrackInfo(mAudioService.getCurrentTrackIdx());
             }
         });
-        ImageButton playButton = (ImageButton) rootView.findViewById(R.id.player_button_play);
-        playButton.setOnClickListener(new View.OnClickListener() {
+        mPlayButton = (ImageButton) rootView.findViewById(R.id.player_button_play);
+        mPlayButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ImageButton button = (ImageButton) v;
                 if (mAudioService.isAudioStreaming()) {
                     mAudioService.pausePlayback();
-                    button.setImageDrawable(getActivity().getResources().getDrawable(android.R.drawable.ic_media_pause));
-                    stopSeekbarUpdate();
                 } else {
                     mAudioService.playOrResumeTrack();
-                    button.setImageDrawable(getActivity().getResources().getDrawable(android.R.drawable.ic_media_play));
-                    scheduleSeekbarUpdate();
                 }
             }
         });
@@ -171,12 +167,13 @@ public class MediaPlayerFragment extends Fragment {
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-
+                stopSeekbarUpdate();
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 mAudioService.seekTrack(seekBar.getProgress() * mAudioService.getTrackTotalDuration() / seekBar.getMax());
+                scheduleSeekbarUpdate();
             }
         });
 
@@ -185,11 +182,10 @@ public class MediaPlayerFragment extends Fragment {
             public void onServiceConnected(ComponentName name, IBinder service) {
                 AudioService.AudioBinder binder = (AudioService.AudioBinder)service;
                 mAudioService = binder.getService();
+
                 mAudioService.setTrackInfoList(mTrackList);
                 mAudioService.prepareTrack(mStartTrackIdx);
 
-                mTotalTimeView.setText(Utils.formatMillis(mAudioService.getTrackTotalDuration()));
-                scheduleSeekbarUpdate();
                 mAudioBound = true;
             }
 
@@ -199,6 +195,8 @@ public class MediaPlayerFragment extends Fragment {
             }
         };
 
+        mAudioStateReceiver = new AudioStateChangeReceiver(this);
+
         return rootView;
     }
 
@@ -206,15 +204,27 @@ public class MediaPlayerFragment extends Fragment {
     public void onStart() {
         super.onStart();
 
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction("ACTION_START_PLAYBACK");
+        intentFilter.addAction("ACTION_PAUSE_PLAYBACK");
+        intentFilter.addAction("ACTION_STOP_PLAYBACK");
+        intentFilter.addAction("ACTION_ONPREPARED_PLAYBACK");
+        intentFilter.addAction("ACTION_RESUME_PLAYBACK");
+
+        getActivity().registerReceiver(mAudioStateReceiver, intentFilter);
+
         if (mPlayIntent == null) {
             mPlayIntent = new Intent(getActivity(), AudioService.class);
             getActivity().bindService(mPlayIntent, mAudioConnection, Context.BIND_AUTO_CREATE);
+            getActivity().startService(mPlayIntent);
         }
     }
 
     @Override
     public void onStop() {
         super.onStop();
+
+        getActivity().unregisterReceiver(mAudioStateReceiver);
 
         getActivity().unbindService(mAudioConnection);
     }
@@ -238,5 +248,36 @@ public class MediaPlayerFragment extends Fragment {
         if (mScheduleFuture != null) {
             mScheduleFuture.cancel(false);
         }
+    }
+
+    @Override
+    public void onPreparedPlayback() {
+        updatePlayerTrackInfo(mAudioService.getCurrentTrackIdx());
+        mSeekBar.setProgress(0);
+    }
+
+    @Override
+    public void onStartPlayback() {
+        mPlayButton.setImageDrawable(getActivity().getResources().getDrawable(android.R.drawable.ic_media_pause));
+        mTotalTimeView.setText(Utils.formatMillis(mAudioService.getTrackTotalDuration()));
+        mSeekBar.setMax(mAudioService.getTrackTotalDuration());
+        scheduleSeekbarUpdate();
+    }
+
+    @Override
+    public void onPausePlayback() {
+        mPlayButton.setImageDrawable(getActivity().getResources().getDrawable(android.R.drawable.ic_media_play));
+        stopSeekbarUpdate();
+    }
+
+    @Override
+    public void onResumePlayback() {
+        mPlayButton.setImageDrawable(getActivity().getResources().getDrawable(android.R.drawable.ic_media_pause));
+        scheduleSeekbarUpdate();
+    }
+
+    @Override
+    public void onStopPlayback() {
+
     }
 }

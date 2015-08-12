@@ -1,5 +1,6 @@
 package com.wallacewu.spotifystreamer;
 
+import android.content.Intent;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
@@ -7,8 +8,12 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.wallacewu.spotifystreamer.data.TrackInformation;
 
-public class TopTracksActivity extends ActionBarActivity {
+import java.util.ArrayList;
+
+
+public class TopTracksActivity extends ActionBarActivity implements TopTracksFragment.Callback {
 
     private TopTracksFragment mTracksFragment;
     static final private String TRACKS_FRAGMENT_TAG = "TRACKS_FRAGMENT";
@@ -69,5 +74,14 @@ public class TopTracksActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onTrackSelected(String artistName, ArrayList<TrackInformation> tracks, int startTrackIdx) {
+        Intent mediaPlayerIntent = new Intent(this, MediaPlayerActivity.class)
+            .putParcelableArrayListExtra(TopTracksFragment.INTENT_EXTRA_TRACK_LIST, tracks)
+            .putExtra(TopTracksFragment.INTENT_EXTRA_TRACK_IDX, startTrackIdx)
+            .putExtra(TopTracksFragment.INTENT_EXTRA_ARTIST_NAME, artistName);
+        startActivity(mediaPlayerIntent);
     }
 }

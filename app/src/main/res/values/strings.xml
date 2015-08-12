@@ -13,6 +13,8 @@
     <string name="cancel">Cancel</string>
     <string name="title_activity_media_player">Now Streaming Preview</string>
 
+    <string name="time_placeholder">--:--</string>
+
     <!-- Default strings to use for player if information is unavailable -->
     <string name="unknown_album_name">No album name</string>
     <string name="unknown_track_name">No track selected</string>
