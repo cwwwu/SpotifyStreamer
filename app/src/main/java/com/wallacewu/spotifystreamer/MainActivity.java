@@ -91,7 +91,7 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
     }
 
     @Override
-    public void onArtitstSelected(String artistName, String artistId) {
+    public void onArtistSelected(String artistName, String artistId) {
         mSelectedArtist = artistName;
         if (mTwoPane) {
             ActionBar actionBar = this.getSupportActionBar();

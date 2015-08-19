@@ -184,7 +184,15 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
                 mAudioService = binder.getService();
 
                 mAudioService.setTrackInfoList(mTrackList);
-                mAudioService.prepareTrack(mStartTrackIdx);
+                mAudioService.setArtistName(mArtistName);
+                if (mAudioService.isAudioStreaming()) {
+                    mSeekBar.setMax(mAudioService.getTrackTotalDuration());
+                    updatePlayerTrackInfo(mAudioService.getCurrentTrackIdx());
+                    mTotalTimeView.setText(Utils.formatMillis(mAudioService.getTrackTotalDuration()));
+                    scheduleSeekbarUpdate();
+                } else {
+                    mAudioService.prepareTrack(mStartTrackIdx);
+                }
 
                 mAudioBound = true;
             }
@@ -198,6 +206,13 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
         mAudioStateReceiver = new AudioStateChangeReceiver(this);
 
         return rootView;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Intent intent = new Intent(getActivity(), AudioService.class);
+        getActivity().startService(intent);
     }
 
     @Override
@@ -216,19 +231,35 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
         if (mPlayIntent == null) {
             mPlayIntent = new Intent(getActivity(), AudioService.class);
             getActivity().bindService(mPlayIntent, mAudioConnection, Context.BIND_AUTO_CREATE);
-            getActivity().startService(mPlayIntent);
         }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        //outState.
     }
 
     @Override
     public void onStop() {
         super.onStop();
+        stopSeekbarUpdate();
 
         getActivity().unregisterReceiver(mAudioStateReceiver);
-
-        getActivity().unbindService(mAudioConnection);
+        if (mAudioBound)
+            getActivity().unbindService(mAudioConnection);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (getActivity().isFinishing()) {
+            Intent intent = new Intent(getActivity(), AudioService.class);
+            getActivity().stopService(intent);
+        }
+    }
 
     private void scheduleSeekbarUpdate() {
         stopSeekbarUpdate();

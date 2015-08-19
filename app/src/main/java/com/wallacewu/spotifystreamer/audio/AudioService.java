@@ -27,7 +27,9 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     private final String LOG_TAG = AudioService.class.getSimpleName();
 
     private MediaPlayer mMediaPlayer;
+
     private ArrayList<TrackInformation> mTracks;
+    private String mArtistName;
     private int mCurrentTrackIdx;
     private int mTrackTotalDurationMs;
 
@@ -39,9 +41,14 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     static private final int STATE_PAUSED = 3;
     private int mAudioState;
 
+    static private final String ACTION_PLAY = "com.wallacewu.spotifystreamer.audio.AudioService.ACTION_PLAY";
+    static private final String ACTION_PAUSE = "com.wallacewu.spotifystreamer.audio.AudioService.ACTION_PAUSE";
+    static private final String ACTION_PREV = "com.wallacewu.spotifystreamer.audio.AudioService.ACTION_PREV";
+    static private final String ACTION_NEXT = "com.wallacewu.spotifystreamer.audio.AudioService.ACTION_NEXT";
+    static private final int REQUEST_CODE = 100;
+
     @Override
     public void onCreate() {
-        super.onCreate();
         mCurrentTrackIdx = 0;
         mAudioState = STATE_STOPPED;
         mMediaPlayer = new MediaPlayer();
@@ -51,6 +58,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         mMediaPlayer.setOnPreparedListener(this);
         mMediaPlayer.setOnCompletionListener(this);
         mMediaPlayer.setOnErrorListener(this);
+        super.onCreate();
     }
 
     @Override
@@ -58,31 +66,6 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         mTrackTotalDurationMs = mp.getDuration();
         updateAudioState(STATE_PREPARED);
         Log.d(LOG_TAG, "Total duration of track: " + mp.getDuration() + "ms");
-
-        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),
-                0, new Intent(getApplicationContext(), MainActivity.class),
-                PendingIntent.FLAG_UPDATE_CURRENT);
-        PendingIntent pendingPreviousIntent = null;
-        PendingIntent pendingPlayIntent = null;
-        PendingIntent pendingNextIntent = null;
-        Notification notification = new NotificationCompat.Builder(this)
-                .setVisibility(Notification.VISIBILITY_PUBLIC)
-                .setContentTitle("Title")
-                .setTicker("Ticker")
-                .setContentText("ContentText")
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setOngoing(true)
-                .setContentIntent(pendingIntent)
-                .addAction(android.R.drawable.ic_media_previous, "Previous", pendingPreviousIntent)
-                .addAction(android.R.drawable.ic_media_play, "Play", pendingPlayIntent)
-                .addAction(android.R.drawable.ic_media_next, "Next", pendingNextIntent)
-                .setStyle(new NotificationCompat.MediaStyle().setShowActionsInCompactView(1))
-                .build();
-        //notification.tickerText = "Ticker text";
-        //notification.icon = android.R.drawable.ic_media_play;
-        //notification.flags |= Notification.FLAG_ONGOING_EVENT;
-        //notification.setLatestEventInfo(getApplicationContext(), "Sample", "Playing song", pendingIntent);
-        startForeground(101, notification);
 
         playOrResumeTrack();
     }
@@ -93,14 +76,9 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     @Override
-    public boolean onUnbind(Intent intent) {
-        mMediaPlayer.stop();
-        mMediaPlayer.release();
-        return false;
-    }
-
-    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        handleIntentAction(intent);
+
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -126,6 +104,60 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         public AudioService getService() {
             return AudioService.this;
         }
+    }
+
+    private boolean handleIntentAction(Intent intent) {
+        if (intent == null || intent.getAction() == null)
+            return false;
+
+        String action = intent.getAction();
+        if (action.equals(ACTION_PAUSE)) {
+            pausePlayback();
+            return true;
+        } else if (action.equals(ACTION_PLAY)) {
+            playOrResumeTrack();
+            return true;
+        } else if (action.equals(ACTION_PREV)) {
+            playPreviousTrack();
+            return true;
+        } else if (action.equals(ACTION_NEXT)) {
+            playNextTrack();
+            return true;
+        }
+
+        return false;
+    }
+
+    private NotificationCompat.Action generateNotificationAction(int drawableResId, String title, String intentAction) {
+        Intent intent = new Intent(getApplicationContext(), AudioService.class);
+        intent.setAction(intentAction);
+        PendingIntent pendingIntent = PendingIntent.getService(getApplicationContext(), REQUEST_CODE, intent, 0);
+        return new NotificationCompat.Action.Builder(drawableResId, title, pendingIntent).build();
+    }
+
+    private void createNotification(NotificationCompat.Action playbackAction) {
+        NotificationCompat.MediaStyle mediaStyle = new NotificationCompat.MediaStyle();
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),
+                0, new Intent(getApplicationContext(), MainActivity.class),
+                PendingIntent.FLAG_UPDATE_CURRENT);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+
+        builder.setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setContentTitle(mTracks.get(mCurrentTrackIdx).trackName)
+                .setContentText(mArtistName)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setOngoing(true)
+                .setContentIntent(pendingIntent)
+                .addAction(generateNotificationAction(android.R.drawable.ic_media_previous, "Previous", ACTION_PREV))
+                .addAction(playbackAction)
+                .addAction(generateNotificationAction(android.R.drawable.ic_media_next, "Next", ACTION_NEXT))
+                .setStyle(mediaStyle);
+
+        mediaStyle.setShowActionsInCompactView(1, 2);
+
+        startForeground(101, builder.build());
     }
 
     private void broadcastAudioState(String state) {
@@ -174,8 +206,19 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         mTracks = tracks;
     }
 
+    public void setArtistName(String artistName) {
+        mArtistName = artistName;
+    }
+
     public int getCurrentTrackIdx() {
         return mCurrentTrackIdx;
+    }
+
+    public String getCurrentTrackUrl() {
+        if (isAudioStreaming())
+            return mTracks.get(mCurrentTrackIdx).trackPreviewUrl;
+
+        return null;
     }
 
     public int getTrackTotalDuration() {
@@ -192,11 +235,13 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
     public void pausePlayback() {
         mMediaPlayer.pause();
+        createNotification(generateNotificationAction(android.R.drawable.ic_media_play, "Play", ACTION_PLAY));
         updateAudioState(STATE_PAUSED);
     }
 
     public void playOrResumeTrack() {
         mMediaPlayer.start();
+        createNotification(generateNotificationAction(android.R.drawable.ic_media_pause, "Pause", ACTION_PAUSE));
         updateAudioState(STATE_PLAYING);
     }
 
