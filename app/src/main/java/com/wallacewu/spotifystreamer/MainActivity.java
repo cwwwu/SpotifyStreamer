@@ -1,15 +1,12 @@
 package com.wallacewu.spotifystreamer;
 
-import android.app.FragmentManager;
-import android.app.SearchManager;
 import android.content.Intent;
-import android.database.sqlite.SQLiteCantOpenDatabaseException;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.wallacewu.spotifystreamer.data.TrackInformation;
 
@@ -20,6 +17,8 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
 
     private boolean mTwoPane;
     private String  mSelectedArtist;
+    private ActionBar mActionBar;
+
     private ArtistSearchFragment mSearchFragment;
     static final private String TOP_TRACKS_FRAGMENT_TAG = "TOP_TRACKS_TAG";
     static final private String BUNDLE_SELECTED_ARTIST = "SELECTED_ARTIST";
@@ -32,17 +31,22 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
 
         setContentView(R.layout.activity_main);
 
+        mActionBar = this.getSupportActionBar();
+        mActionBar.setSubtitle(getString(R.string.action_bar_prompt));
+
         if (savedInstanceState != null && savedInstanceState.containsKey(BUNDLE_SELECTED_ARTIST)) {
             mSelectedArtist = savedInstanceState.getString(BUNDLE_SELECTED_ARTIST);
-            this.getSupportActionBar().setSubtitle(mSelectedArtist);
+            mActionBar.setSubtitle(mSelectedArtist);
         }
 
         if (findViewById(R.id.top_tracks_container) != null) {
             mTwoPane = true;
 
             if (savedInstanceState == null) {
+                findViewById(R.id.top_tracks_container).setVisibility(View.GONE);
+                TopTracksFragment topTracksFragment = new TopTracksFragment();
                 getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.top_tracks_container, new TopTracksFragment(), TOP_TRACKS_FRAGMENT_TAG)
+                        .replace(R.id.top_tracks_container, topTracksFragment, TOP_TRACKS_FRAGMENT_TAG)
                         .commit();
             }
         } else {
@@ -94,10 +98,7 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
     public void onArtistSelected(String artistName, String artistId) {
         mSelectedArtist = artistName;
         if (mTwoPane) {
-            ActionBar actionBar = this.getSupportActionBar();
-            if (actionBar != null) {
-                actionBar.setSubtitle(mSelectedArtist); //TODO: handle config change
-            }
+            mActionBar.setSubtitle(mSelectedArtist);
 
             Bundle args = new Bundle();
             args.putString(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME, artistName);
@@ -106,6 +107,7 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
             TopTracksFragment fragment = new TopTracksFragment();
             fragment.setArguments(args);
 
+            findViewById(R.id.top_tracks_container).setVisibility(View.VISIBLE);
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.top_tracks_container, fragment, TOP_TRACKS_FRAGMENT_TAG)
                     .commit();
@@ -114,6 +116,15 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
                 .putExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME, artistName)
                 .putExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID, artistId);
             startActivity(topTracksIntent);
+        }
+    }
+
+    @Override
+    public void onSuccessfulArtistSearch(String query) {
+        if (mTwoPane) {
+            mActionBar.setSubtitle(getString(R.string.artist_search_prefix) + " \"" + query + "\"");
+            findViewById(R.id.top_tracks_container).setVisibility(View.GONE);
+            //TODO: clear top tracks fragment (empty the list)
         }
     }
 

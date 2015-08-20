@@ -71,6 +71,7 @@ public class ArtistSearchFragment extends Fragment {
          * Callback for when an item has been selected.
          */
         void onArtistSelected(String artistName, String artistId);
+        void onSuccessfulArtistSearch(String userQuery);
     }
 
     @Override
@@ -226,6 +227,7 @@ public class ArtistSearchFragment extends Fragment {
 
         private final String LOG_TAG = FetchArtistTask.class.getSimpleName();
         private RetrofitError.Kind mStatus = null;
+        private String mQuery;
 
         @Override
         protected void onPreExecute() {
@@ -237,13 +239,13 @@ public class ArtistSearchFragment extends Fragment {
             if (params.length == 0)
                 return null;
 
-            String searchArtistName = params[0];
+            mQuery = params[0];
 
             ArrayList<ArtistInformation> artists = new ArrayList<ArtistInformation>();
             try {
                 SpotifyApi spotifyApi = new SpotifyApi();
                 SpotifyService spotifyService = spotifyApi.getService();
-                ArtistsPager results = spotifyService.searchArtists(searchArtistName);
+                ArtistsPager results = spotifyService.searchArtists(mQuery);
 
                 for (Artist artist : results.artists.items) {
                     artists.add(
@@ -296,7 +298,9 @@ public class ArtistSearchFragment extends Fragment {
                 for (ArtistInformation artist : artists) {
                     mArtistsAdapter.add(artist);
                 }
+                mArtistList.clearChoices();
                 mArtistList.smoothScrollToPosition(0);
+                ((Callback) getActivity()).onSuccessfulArtistSearch(mQuery);
             } else {
                 Toast.makeText(
                         getActivity().getApplicationContext(),
