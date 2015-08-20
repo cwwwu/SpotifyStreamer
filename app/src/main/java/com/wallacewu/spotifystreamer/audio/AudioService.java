@@ -15,6 +15,7 @@ import android.util.Log;
 import com.wallacewu.spotifystreamer.MainActivity;
 import com.wallacewu.spotifystreamer.R;
 import com.wallacewu.spotifystreamer.data.TrackInformation;
+import com.wallacewu.spotifystreamer.util.Utils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -136,6 +137,9 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     private void createNotification(NotificationCompat.Action playbackAction) {
+        if (!Utils.shouldShowNotification(this))
+            return;
+
         NotificationCompat.MediaStyle mediaStyle = new NotificationCompat.MediaStyle();
 
         PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),

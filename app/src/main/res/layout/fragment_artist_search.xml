@@ -13,10 +13,10 @@
         android:layout_height="match_parent">
 
         <ListView
+            style="@style/ArtistListStyle"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/search_artist_results_list"
-            android:choiceMode="singleChoice" />
+            android:id="@+id/search_artist_results_list" />
 
 
         <ProgressBar

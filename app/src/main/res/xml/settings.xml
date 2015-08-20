@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <ListPreference
+        android:entries="@array/pref_country_names"
+        android:entryValues="@array/pref_country_codes"
+        android:key="@string/pref_country_key"
+        android:summary="%s"
+        android:title="@string/pref_country_title" />
+
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="@string/pref_notification_key"
+        android:title="@string/pref_notification_title"
+        android:summaryOff="@string/pref_notification_switch_off"
+        android:summaryOn="@string/pref_notification_switch_on"/>
+</PreferenceScreen>

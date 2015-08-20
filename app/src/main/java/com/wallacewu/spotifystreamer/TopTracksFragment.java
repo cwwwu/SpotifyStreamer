@@ -20,6 +20,7 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 import com.wallacewu.spotifystreamer.data.TrackInformation;
+import com.wallacewu.spotifystreamer.util.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -175,7 +176,7 @@ public class TopTracksFragment extends Fragment {
             Map<String, Object> options = new HashMap<String, Object>();
             options.put(SpotifyService.OFFSET, 0);
             options.put(SpotifyService.LIMIT, 10);
-            options.put(SpotifyService.COUNTRY, Locale.getDefault().getCountry());
+            options.put(SpotifyService.COUNTRY, Utils.getCountryCode(getActivity()));
             Tracks results = spotifyService.getArtistTopTrack(artistId, options);
 
             ArrayList<TrackInformation> tracks = new ArrayList<TrackInformation>();

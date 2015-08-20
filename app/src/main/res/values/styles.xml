@@ -15,4 +15,7 @@
         <item name="background">@color/spotify_green</item>
     </style>
 
+    <!-- Settings Activity Theme -->
+    <style name="SettingsTheme" parent="AppTheme"></style>
+
 </resources>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings Activity Theme -->
+    <!-- .Light.DarkActionBar -->
+    <style name="SettingsTheme" parent="@android:style/Theme.Holo">
+        <item name="android:actionBarStyle">@style/ActionBar.V14.SpotifyStreamer.NoTitle</item>
+    </style>
+
+    <!-- Settings Activity Action Bar Style -->
+    <style name="ActionBar.V14.SpotifyStreamer.NoTitle" parent="@android:style/Widget.Holo.Light.ActionBar.Solid.Inverse">
+        <item name="android:background">@color/spotify_green</item>
+        <item name="android:height">56dp</item>
+    </style>
+</resources>
