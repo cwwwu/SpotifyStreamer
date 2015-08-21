@@ -1,10 +1,8 @@
-package com.wallacewu.spotifystreamer.audio;
+package com.wallacewu.spotifystreamer;
 
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -14,17 +12,12 @@ import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
-import com.wallacewu.spotifystreamer.MainActivity;
-import com.wallacewu.spotifystreamer.R;
 import com.wallacewu.spotifystreamer.data.TrackInformation;
-import com.wallacewu.spotifystreamer.util.Utils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -56,10 +49,10 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
     private int mAudioState;
 
-    static private final String ACTION_PLAY = "com.wallacewu.spotifystreamer.audio.AudioService.ACTION_PLAY";
-    static private final String ACTION_PAUSE = "com.wallacewu.spotifystreamer.audio.AudioService.ACTION_PAUSE";
-    static private final String ACTION_PREV = "com.wallacewu.spotifystreamer.audio.AudioService.ACTION_PREV";
-    static private final String ACTION_NEXT = "com.wallacewu.spotifystreamer.audio.AudioService.ACTION_NEXT";
+    static private final String ACTION_PLAY = "com.wallacewu.spotifystreamer.AudioService.ACTION_PLAY";
+    static private final String ACTION_PAUSE = "com.wallacewu.spotifystreamer.AudioService.ACTION_PAUSE";
+    static private final String ACTION_PREV = "com.wallacewu.spotifystreamer.AudioService.ACTION_PREV";
+    static private final String ACTION_NEXT = "com.wallacewu.spotifystreamer.AudioService.ACTION_NEXT";
     static private final int REQUEST_CODE = 100;
 
     @Override
@@ -156,10 +149,6 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
         NotificationCompat.MediaStyle mediaStyle = new NotificationCompat.MediaStyle();
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(),
-                0, new Intent(getApplicationContext(), MainActivity.class),
-                PendingIntent.FLAG_UPDATE_CURRENT);
-
         TrackInformation trackInformation = mTracks.get(mCurrentTrackIdx);
         String imageUrl = trackInformation.albumImageUrl;
         Bitmap image = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
@@ -173,7 +162,6 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
                 .setLargeIcon(image)
                 .setOngoing(true)
                 .setShowWhen(false)
-                .setContentIntent(pendingIntent)
                 .addAction(generateNotificationAction(android.R.drawable.ic_media_previous, "Previous", ACTION_PREV))
                 .addAction(playbackAction)
                 .addAction(generateNotificationAction(android.R.drawable.ic_media_next, "Next", ACTION_NEXT))
@@ -216,22 +204,22 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     private void updateAudioState(int state) {
         switch (state) {
             case STATE_UNINITIALIZED:
-                broadcastAudioState("ACTION_PLAYER_UNINITIALIZED");
+                broadcastAudioState(AudioStateChangeReceiver.ACTION_START_PLAYBACK);
                 break;
             case STATE_STOPPED:
-                broadcastAudioState("ACTION_STOP_PLAYBACK");
+                broadcastAudioState(AudioStateChangeReceiver.ACTION_STOP_PLAYBACK);
                 break;
             case STATE_PREPARING:
-                broadcastAudioState("ACTION_PREPARING_PLAYBACK");
+                broadcastAudioState(AudioStateChangeReceiver.ACTION_PREPARING_PLAYBACK);
                 break;
             case STATE_PREPARED:
-                broadcastAudioState("ACTION_ONPREPARED_PLAYBACK");
+                broadcastAudioState(AudioStateChangeReceiver.ACTION_ONPREPARED_PLAYBACK);
                 break;
             case STATE_PLAYING:
                 if (mAudioState == STATE_PAUSED) {
-                    broadcastAudioState("ACTION_RESUME_PLAYBACK");
+                    broadcastAudioState(AudioStateChangeReceiver.ACTION_RESUME_PLAYBACK);
                 } else {
-                    broadcastAudioState("ACTION_START_PLAYBACK");
+                    broadcastAudioState(AudioStateChangeReceiver.ACTION_START_PLAYBACK);
                 }
                 break;
             case STATE_PAUSED:
@@ -244,7 +232,6 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
     public void prepareTrack(int trackIdx) {
         mMediaPlayer.reset();
-
         mCurrentTrackIdx = trackIdx;
 
         try {

@@ -15,6 +15,7 @@ public class AudioStateChangeReceiver extends BroadcastReceiver {
     static public String ACTION_PAUSE_PLAYBACK = "ACTION_PAUSE_PLAYBACK";
     static public String ACTION_STOP_PLAYBACK = "ACTION_STOP_PLAYBACK";
     static public String ACTION_ONPREPARED_PLAYBACK = "ACTION_ONPREPARED_PLAYBACK";
+    static public String ACTION_PREPARING_PLAYBACK = "ACTION_PREPARING_PLAYBACK";
 
     private Callback mCallback;
 

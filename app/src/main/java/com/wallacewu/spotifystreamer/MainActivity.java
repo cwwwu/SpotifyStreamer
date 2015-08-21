@@ -1,5 +1,6 @@
 package com.wallacewu.spotifystreamer;
 
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
@@ -55,8 +56,8 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
             mTwoPane = false;
         }
 
-//        FragmentManager fragmentManager = getFragmentManager();
-//        mSearchFragment = (ArtistSearchFragment) fragmentManager.findFragmentById(R.id.fragment_artist_search);
+        FragmentManager fragmentManager = getFragmentManager();
+        mSearchFragment = (ArtistSearchFragment) fragmentManager.findFragmentById(R.id.fragment_artist_search);
     }
 
     @Override

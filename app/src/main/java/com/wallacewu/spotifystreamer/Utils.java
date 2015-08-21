@@ -1,17 +1,15 @@
-package com.wallacewu.spotifystreamer.util;
+package com.wallacewu.spotifystreamer;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-
-import com.wallacewu.spotifystreamer.R;
 
 /**
  * Created by Wallace on 8/7/2015.
  */
 public class Utils {
 
-    public static String formatMillis(int millisec) {
+    public static String formatTimestamp(int millisec) {
         int seconds = millisec / 1000;
         int hours = seconds / 3600;
         seconds %= 3600;
@@ -19,7 +17,7 @@ public class Utils {
         seconds %= 60;
         String time;
 
-        if(hours > 0) {
+        if (hours > 0) {
             time = String.format("%d:%02d:%02d", new Object[]{Integer.valueOf(hours), Integer.valueOf(minutes), Integer.valueOf(seconds)});
         } else {
             time = String.format("%d:%02d", new Object[]{Integer.valueOf(minutes), Integer.valueOf(seconds)});

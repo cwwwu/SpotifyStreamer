@@ -20,11 +20,9 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 import com.wallacewu.spotifystreamer.data.TrackInformation;
-import com.wallacewu.spotifystreamer.util.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import kaaes.spotify.webapi.android.SpotifyApi;
@@ -156,7 +154,6 @@ public class TopTracksFragment extends Fragment {
      */
     class FetchTrackTask extends AsyncTask<String, Void, ArrayList<TrackInformation>> {
 
-        private final String LOG_TAG = FetchTrackTask.class.getSimpleName();
         private RetrofitError.Kind mStatus = null;
 
         @Override

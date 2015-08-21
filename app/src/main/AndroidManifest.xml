@@ -50,7 +50,7 @@
                 android:value=".MainActivity" />
         </activity>
 
-        <service android:name=".audio.AudioService" />
+        <service android:name=".AudioService" />
     </application>
 
 </manifest>

@@ -18,9 +18,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
-import com.wallacewu.spotifystreamer.audio.AudioService;
 import com.wallacewu.spotifystreamer.data.TrackInformation;
-import com.wallacewu.spotifystreamer.util.Utils;
 
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
@@ -163,7 +161,7 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
 
                     mSeekBar.setMax(mAudioService.getTrackTotalDuration());
                     updatePlayerTrackInfo(mAudioService.getCurrentTrackIdx());
-                    mTotalTimeView.setText(Utils.formatMillis(mAudioService.getTrackTotalDuration()));
+                    mTotalTimeView.setText(Utils.formatTimestamp(mAudioService.getTrackTotalDuration()));
                     scheduleSeekbarUpdate();
                 } else {
                     mAudioService.setTrackInfoList(mTrackList);
@@ -236,7 +234,7 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
     private void updateProgress() {
         int currentPosition = mAudioService.getCurrentPlaybackPosition();
         mSeekBar.setProgress(currentPosition);
-        mElapsedTimeView.setText(Utils.formatMillis(mAudioService.getCurrentPlaybackPosition()));
+        mElapsedTimeView.setText(Utils.formatTimestamp(mAudioService.getCurrentPlaybackPosition()));
     }
 
     private void updatePlayerTrackInfo(int trackIdx) {
@@ -291,7 +289,7 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
     @Override
     public void onStartPlayback() {
         mPlayButton.setImageDrawable(getActivity().getResources().getDrawable(android.R.drawable.ic_media_pause));
-        mTotalTimeView.setText(Utils.formatMillis(mAudioService.getTrackTotalDuration()));
+        mTotalTimeView.setText(Utils.formatTimestamp(mAudioService.getTrackTotalDuration()));
         mSeekBar.setMax(mAudioService.getTrackTotalDuration());
         scheduleSeekbarUpdate();
     }
