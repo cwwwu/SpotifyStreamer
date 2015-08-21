@@ -243,7 +243,6 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public void prepareTrack(int trackIdx) {
-//        mMediaPlayer.stop();
         mMediaPlayer.reset();
 
         mCurrentTrackIdx = trackIdx;
@@ -271,7 +270,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public String getCurrentTrackUrl() {
-        if (isAudioStreaming())
+        if (isAudioTrackUrlValid())
             return mTracks.get(mCurrentTrackIdx).trackPreviewUrl;
 
         return null;
@@ -303,6 +302,10 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
     public boolean isAudioStreaming() {
         return mAudioState == STATE_PLAYING;
+    }
+
+    public boolean isAudioTrackUrlValid() {
+        return !(mAudioState == STATE_STOPPED || mAudioState == STATE_UNINITIALIZED);
     }
 
     public void playPreviousTrack() {

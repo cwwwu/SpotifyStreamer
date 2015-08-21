@@ -72,35 +72,6 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
 
     }
 
-    private void updateProgress() {
-        int currentPosition = mAudioService.getCurrentPlaybackPosition();
-        mSeekBar.setProgress(currentPosition);
-        mElapsedTimeView.setText(Utils.formatMillis(mAudioService.getCurrentPlaybackPosition()));
-    }
-
-    private void updatePlayerTrackInfo(int trackIdx) {
-        if (trackIdx < 0 || trackIdx >= mTrackList.size())
-            return;
-
-        TrackInformation trackInformation = mTrackList.get(trackIdx);
-
-        String albumName = getActivity().getString(R.string.unknown_album_name);
-        String trackName = getActivity().getString(R.string.unknown_track_name);
-        String albumImageUrl = null;
-
-        albumName = trackInformation.albumName != null ? trackInformation.albumName : albumName;
-        trackName = trackInformation.trackName != null ? trackInformation.trackName : trackName;
-        albumImageUrl = trackInformation.albumImageUrl != null ? trackInformation.albumImageUrl : albumImageUrl;
-
-        mAlbumTextView.setText(albumName);
-        if (albumImageUrl != null) {
-            Picasso.with(getActivity()).load(albumImageUrl).into(mAlbumImageView);
-        } else {
-            mAlbumImageView.setImageResource(R.color.missing_thumbnail);
-        }
-        mTrackTextView.setText(trackName);
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -179,17 +150,24 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
         mAudioConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
-                AudioService.AudioBinder binder = (AudioService.AudioBinder)service;
+                AudioService.AudioBinder binder = (AudioService.AudioBinder) service;
                 mAudioService = binder.getService();
 
-                mAudioService.setTrackInfoList(mTrackList);
-                mAudioService.setArtistName(mArtistName);
-                if (mAudioService.isAudioStreaming()) {
+
+                if (mAudioService.isAudioTrackUrlValid()) {
+                    if (!mAudioService.getCurrentTrackUrl().equals(mTrackList.get(mStartTrackIdx).trackPreviewUrl)) {
+                        mAudioService.setTrackInfoList(mTrackList);
+                        mAudioService.setArtistName(mArtistName);
+                        mAudioService.prepareTrack(mStartTrackIdx);
+                    }
+
                     mSeekBar.setMax(mAudioService.getTrackTotalDuration());
                     updatePlayerTrackInfo(mAudioService.getCurrentTrackIdx());
                     mTotalTimeView.setText(Utils.formatMillis(mAudioService.getTrackTotalDuration()));
                     scheduleSeekbarUpdate();
                 } else {
+                    mAudioService.setTrackInfoList(mTrackList);
+                    mAudioService.setArtistName(mArtistName);
                     mAudioService.prepareTrack(mStartTrackIdx);
                 }
 
@@ -220,7 +198,7 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
 
         if (mPlayIntent == null) {
             mPlayIntent = new Intent(getActivity(), AudioService.class);
-            getActivity().bindService(mPlayIntent, mAudioConnection, Context.BIND_AUTO_CREATE);
+            getActivity().startService(mPlayIntent);
         }
     }
 
@@ -228,6 +206,7 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
     public void onStart() {
         super.onStart();
 
+        getActivity().bindService(mPlayIntent, mAudioConnection, Context.BIND_AUTO_CREATE);
         getActivity().registerReceiver(mAudioStateReceiver, mPlaybackIntentFilter);
 
         if (mAudioBound && mAudioService.isAudioStreaming()) {
@@ -239,8 +218,9 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
     @Override
     public void onStop() {
         super.onStop();
-        stopSeekbarUpdate();
 
+        stopSeekbarUpdate();
+        getActivity().unbindService(mAudioConnection);
         getActivity().unregisterReceiver(mAudioStateReceiver);
     }
 
@@ -249,9 +229,37 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
         super.onDestroy();
 
         if (getActivity().isFinishing()) {
-            if (mAudioBound)
-                getActivity().unbindService(mAudioConnection);
+            getActivity().stopService(mPlayIntent);
         }
+    }
+
+    private void updateProgress() {
+        int currentPosition = mAudioService.getCurrentPlaybackPosition();
+        mSeekBar.setProgress(currentPosition);
+        mElapsedTimeView.setText(Utils.formatMillis(mAudioService.getCurrentPlaybackPosition()));
+    }
+
+    private void updatePlayerTrackInfo(int trackIdx) {
+        if (trackIdx < 0 || trackIdx >= mTrackList.size())
+            return;
+
+        TrackInformation trackInformation = mTrackList.get(trackIdx);
+
+        String albumName = getActivity().getString(R.string.unknown_album_name);
+        String trackName = getActivity().getString(R.string.unknown_track_name);
+        String albumImageUrl = null;
+
+        albumName = trackInformation.albumName != null ? trackInformation.albumName : albumName;
+        trackName = trackInformation.trackName != null ? trackInformation.trackName : trackName;
+        albumImageUrl = trackInformation.albumImageUrl != null ? trackInformation.albumImageUrl : albumImageUrl;
+
+        mAlbumTextView.setText(albumName);
+        if (albumImageUrl != null) {
+            Picasso.with(getActivity()).load(albumImageUrl).into(mAlbumImageView);
+        } else {
+            mAlbumImageView.setImageResource(R.color.missing_thumbnail);
+        }
+        mTrackTextView.setText(trackName);
     }
 
     private void scheduleSeekbarUpdate() {
