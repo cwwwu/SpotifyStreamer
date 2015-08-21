@@ -1,17 +1,26 @@
 package com.wallacewu.spotifystreamer.audio;
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 import com.wallacewu.spotifystreamer.MainActivity;
 import com.wallacewu.spotifystreamer.R;
 import com.wallacewu.spotifystreamer.data.TrackInformation;
@@ -33,6 +42,8 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     private String mArtistName;
     private int mCurrentTrackIdx;
     private int mTrackTotalDurationMs;
+
+    static private final int NOTIFICATION_ID = 101;
 
     private final IBinder mAudioBind = new AudioBinder();
 
@@ -59,6 +70,8 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         mMediaPlayer.setOnPreparedListener(this);
         mMediaPlayer.setOnCompletionListener(this);
         mMediaPlayer.setOnErrorListener(this);
+
+//        MediaSessionCompat mediaSession = new MediaSessionCompat(this, "SESSION_TAG");
         super.onCreate();
     }
 
@@ -146,22 +159,51 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
                 0, new Intent(getApplicationContext(), MainActivity.class),
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
+        TrackInformation trackInformation = mTracks.get(mCurrentTrackIdx);
+        String imageUrl = trackInformation.albumImageUrl;
+        Bitmap image = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
 
         builder.setVisibility(Notification.VISIBILITY_PUBLIC)
-                .setContentTitle(mTracks.get(mCurrentTrackIdx).trackName)
+                .setContentTitle(trackInformation.trackName)
                 .setContentText(mArtistName)
                 .setSmallIcon(R.mipmap.ic_launcher)
+                .setLargeIcon(image)
                 .setOngoing(true)
+                .setShowWhen(false)
                 .setContentIntent(pendingIntent)
                 .addAction(generateNotificationAction(android.R.drawable.ic_media_previous, "Previous", ACTION_PREV))
                 .addAction(playbackAction)
                 .addAction(generateNotificationAction(android.R.drawable.ic_media_next, "Next", ACTION_NEXT))
                 .setStyle(mediaStyle);
 
-        mediaStyle.setShowActionsInCompactView(1, 2);
+        mediaStyle.setShowActionsInCompactView(0, 1, 2);
 
-        startForeground(101, builder.build());
+        loadImage(imageUrl, builder);
+
+        startForeground(NOTIFICATION_ID, builder.build());
+    }
+
+    private void loadImage(String imageUrl, final NotificationCompat.Builder builder) {
+        if (imageUrl == null)
+            return;
+
+        Picasso.with(this).load(imageUrl).into(new Target() {
+            @Override
+            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                builder.setLargeIcon(bitmap);
+                startForeground(NOTIFICATION_ID, builder.build());
+            }
+
+            @Override
+            public void onBitmapFailed(Drawable errorDrawable) {
+            }
+
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {
+            }
+        });
     }
 
     private void broadcastAudioState(String state) {
@@ -250,11 +292,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public boolean isAudioStreaming() {
-        return mMediaPlayer.isPlaying();
-    }
-
-    public boolean isStopped() {
-        return mAudioState == STATE_STOPPED;
+        return mAudioState == STATE_PLAYING;
     }
 
     public void playPreviousTrack() {

@@ -27,17 +27,18 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mSelectedArtist = null;
+        mSelectedArtist = getString(R.string.action_bar_prompt);
 
         setContentView(R.layout.activity_main);
 
         mActionBar = this.getSupportActionBar();
-        mActionBar.setSubtitle(getString(R.string.action_bar_prompt));
 
         if (savedInstanceState != null && savedInstanceState.containsKey(BUNDLE_SELECTED_ARTIST)) {
             mSelectedArtist = savedInstanceState.getString(BUNDLE_SELECTED_ARTIST);
             mActionBar.setSubtitle(mSelectedArtist);
         }
+
+        mActionBar.setSubtitle(mSelectedArtist);
 
         if (findViewById(R.id.top_tracks_container) != null) {
             mTwoPane = true;
@@ -123,10 +124,10 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
 
     @Override
     public void onSuccessfulArtistSearch(String query) {
+        mActionBar.setSubtitle(getString(R.string.artist_search_prefix) + " \"" + query + "\"");
+
         if (mTwoPane) {
-            mActionBar.setSubtitle(getString(R.string.artist_search_prefix) + " \"" + query + "\"");
             findViewById(R.id.top_tracks_container).setVisibility(View.GONE);
-            //TODO: clear top tracks fragment (empty the list)
         }
     }
 

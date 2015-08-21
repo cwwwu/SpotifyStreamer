@@ -11,12 +11,15 @@
     <TextView
         android:id="@+id/player_artist_name"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/player_album_name"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:textAlignment="center"/>
 
     <ImageView
         android:id="@+id/player_album_image"
@@ -29,7 +32,8 @@
     <TextView
         android:id="@+id/player_track_name"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:textAlignment="center"/>
 
     <SeekBar
         android:id="@+id/player_seek_bar"

@@ -229,14 +229,12 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
         if (mPlayIntent == null) {
             mPlayIntent = new Intent(getActivity(), AudioService.class);
             getActivity().bindService(mPlayIntent, mAudioConnection, Context.BIND_AUTO_CREATE);
+        } else {
+            if (mAudioBound && mAudioService.isAudioStreaming()) {
+                scheduleSeekbarUpdate();
+                updatePlayerTrackInfo(mAudioService.getCurrentTrackIdx());
+            }
         }
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        //outState.
     }
 
     @Override

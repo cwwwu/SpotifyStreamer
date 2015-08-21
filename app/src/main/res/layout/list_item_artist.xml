@@ -5,13 +5,9 @@
     android:background="@drawable/touch_selector">
 
     <ImageView
-        android:layout_width="96dp"
-        android:layout_height="96dp"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
         android:scaleType="fitCenter"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
-        android:layout_marginLeft="10dp"
-        android:layout_marginStart="10dp"
         android:gravity="center_vertical"
         android:id="@+id/artist_image_thumbnail" />
 

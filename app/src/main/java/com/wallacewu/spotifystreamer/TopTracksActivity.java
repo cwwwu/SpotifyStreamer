@@ -15,8 +15,8 @@ import java.util.ArrayList;
 
 public class TopTracksActivity extends ActionBarActivity implements TopTracksFragment.Callback {
 
-    private TopTracksFragment mTracksFragment;
-    static final private String TRACKS_FRAGMENT_TAG = "TRACKS_FRAGMENT";
+    private String  mSelectedArtist;
+    static final private String BUNDLE_SELECTED_ARTIST = "SELECTED_ARTIST";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,13 +24,11 @@ public class TopTracksActivity extends ActionBarActivity implements TopTracksFra
         setContentView(R.layout.activity_top_tracks);
 
         if (savedInstanceState == null) {
-            ActionBar actionBar = this.getSupportActionBar();
-            if (actionBar != null) {
-                actionBar.setSubtitle(getIntent().getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME)); // TODO: handle config change
-            }
+            mSelectedArtist = getIntent().getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME);
+
 
             Bundle args = new Bundle();
-            args.putString(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME, getIntent().getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME));
+            args.putString(ArtistSearchFragment.INTENT_EXTRA_ARTIST_NAME, mSelectedArtist);
             args.putString(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID, getIntent().getStringExtra(ArtistSearchFragment.INTENT_EXTRA_ARTIST_ID));
 
             TopTracksFragment topTracksFragment = new TopTracksFragment();
@@ -39,8 +37,11 @@ public class TopTracksActivity extends ActionBarActivity implements TopTracksFra
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.top_tracks_container, topTracksFragment)
                     .commit();
+        } else {
+            mSelectedArtist = savedInstanceState.getString(BUNDLE_SELECTED_ARTIST, "");
         }
 
+        getSupportActionBar().setSubtitle(mSelectedArtist);
     }
 
     @Override
@@ -49,6 +50,11 @@ public class TopTracksActivity extends ActionBarActivity implements TopTracksFra
         //mTracksFragement.setData(collectMyLoadedData());
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString(BUNDLE_SELECTED_ARTIST, mSelectedArtist);
+        super.onSaveInstanceState(outState);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
