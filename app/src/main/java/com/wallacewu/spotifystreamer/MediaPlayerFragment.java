@@ -39,6 +39,7 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
 
     private AudioService mAudioService;
     private Intent mPlayIntent;
+    IntentFilter mPlaybackIntentFilter;
     private boolean mAudioBound = false;
     private ServiceConnection mAudioConnection;
 
@@ -207,33 +208,31 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Intent intent = new Intent(getActivity(), AudioService.class);
-        getActivity().startService(intent);
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        mPlaybackIntentFilter = new IntentFilter();
+        mPlaybackIntentFilter.addAction("ACTION_START_PLAYBACK");
+        mPlaybackIntentFilter.addAction("ACTION_PAUSE_PLAYBACK");
+        mPlaybackIntentFilter.addAction("ACTION_STOP_PLAYBACK");
+        mPlaybackIntentFilter.addAction("ACTION_ONPREPARED_PLAYBACK");
+        mPlaybackIntentFilter.addAction("ACTION_RESUME_PLAYBACK");
+
+        if (mPlayIntent == null) {
+            mPlayIntent = new Intent(getActivity(), AudioService.class);
+            getActivity().bindService(mPlayIntent, mAudioConnection, Context.BIND_AUTO_CREATE);
+        }
     }
 
     @Override
     public void onStart() {
         super.onStart();
 
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction("ACTION_START_PLAYBACK");
-        intentFilter.addAction("ACTION_PAUSE_PLAYBACK");
-        intentFilter.addAction("ACTION_STOP_PLAYBACK");
-        intentFilter.addAction("ACTION_ONPREPARED_PLAYBACK");
-        intentFilter.addAction("ACTION_RESUME_PLAYBACK");
+        getActivity().registerReceiver(mAudioStateReceiver, mPlaybackIntentFilter);
 
-        getActivity().registerReceiver(mAudioStateReceiver, intentFilter);
-
-        if (mPlayIntent == null) {
-            mPlayIntent = new Intent(getActivity(), AudioService.class);
-            getActivity().bindService(mPlayIntent, mAudioConnection, Context.BIND_AUTO_CREATE);
-        } else {
-            if (mAudioBound && mAudioService.isAudioStreaming()) {
-                scheduleSeekbarUpdate();
-                updatePlayerTrackInfo(mAudioService.getCurrentTrackIdx());
-            }
+        if (mAudioBound && mAudioService.isAudioStreaming()) {
+            updatePlayerTrackInfo(mAudioService.getCurrentTrackIdx());
+            scheduleSeekbarUpdate();
         }
     }
 
@@ -243,8 +242,6 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
         stopSeekbarUpdate();
 
         getActivity().unregisterReceiver(mAudioStateReceiver);
-        if (mAudioBound)
-            getActivity().unbindService(mAudioConnection);
     }
 
     @Override
@@ -252,8 +249,8 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
         super.onDestroy();
 
         if (getActivity().isFinishing()) {
-            Intent intent = new Intent(getActivity(), AudioService.class);
-            getActivity().stopService(intent);
+            if (mAudioBound)
+                getActivity().unbindService(mAudioConnection);
         }
     }
 

@@ -47,10 +47,13 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
     private final IBinder mAudioBind = new AudioBinder();
 
-    static private final int STATE_STOPPED = 0;
-    static private final int STATE_PREPARED = 1;
-    static private final int STATE_PLAYING = 2;
-    static private final int STATE_PAUSED = 3;
+    static private final int STATE_UNINITIALIZED = 0;
+    static private final int STATE_PREPARING = 1;
+    static private final int STATE_PREPARED = 2;
+    static private final int STATE_PLAYING = 3;
+    static private final int STATE_PAUSED = 4;
+    static private final int STATE_STOPPED = 5;
+
     private int mAudioState;
 
     static private final String ACTION_PLAY = "com.wallacewu.spotifystreamer.audio.AudioService.ACTION_PLAY";
@@ -62,7 +65,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     @Override
     public void onCreate() {
         mCurrentTrackIdx = 0;
-        mAudioState = STATE_STOPPED;
+        mAudioState = STATE_UNINITIALIZED;
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -71,7 +74,6 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
         mMediaPlayer.setOnCompletionListener(this);
         mMediaPlayer.setOnErrorListener(this);
 
-//        MediaSessionCompat mediaSession = new MediaSessionCompat(this, "SESSION_TAG");
         super.onCreate();
     }
 
@@ -92,7 +94,6 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         handleIntentAction(intent);
-
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -214,8 +215,14 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
     private void updateAudioState(int state) {
         switch (state) {
+            case STATE_UNINITIALIZED:
+                broadcastAudioState("ACTION_PLAYER_UNINITIALIZED");
+                break;
             case STATE_STOPPED:
                 broadcastAudioState("ACTION_STOP_PLAYBACK");
+                break;
+            case STATE_PREPARING:
+                broadcastAudioState("ACTION_PREPARING_PLAYBACK");
                 break;
             case STATE_PREPARED:
                 broadcastAudioState("ACTION_ONPREPARED_PLAYBACK");
@@ -236,6 +243,9 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
     }
 
     public void prepareTrack(int trackIdx) {
+//        mMediaPlayer.stop();
+        mMediaPlayer.reset();
+
         mCurrentTrackIdx = trackIdx;
 
         try {

@@ -20,6 +20,7 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
     private ActionBar mActionBar;
 
     private ArtistSearchFragment mSearchFragment;
+    private MediaPlayerFragment mMediaPlayerFragment;
     static final private String TOP_TRACKS_FRAGMENT_TAG = "TOP_TRACKS_TAG";
     static final private String BUNDLE_SELECTED_ARTIST = "SELECTED_ARTIST";
 
@@ -138,9 +139,11 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
         args.putInt(TopTracksFragment.INTENT_EXTRA_TRACK_IDX, startTrackIdx);
         args.putParcelableArrayList(TopTracksFragment.INTENT_EXTRA_TRACK_LIST, tracks);
 
-        MediaPlayerFragment fragment = new MediaPlayerFragment();
-        fragment.setArguments(args);
+        if (mMediaPlayerFragment == null) {
+            mMediaPlayerFragment = new MediaPlayerFragment();
+        }
+        mMediaPlayerFragment.setArguments(args);
 
-        fragment.show(getSupportFragmentManager(), "bla_bla_bla");
+        mMediaPlayerFragment.show(getSupportFragmentManager(), "bla_bla_bla");
     }
 }
