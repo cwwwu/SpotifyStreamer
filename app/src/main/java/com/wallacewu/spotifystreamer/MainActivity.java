@@ -41,11 +41,13 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
 
         mActionBar.setSubtitle(mSelectedArtist);
 
-        if (findViewById(R.id.top_tracks_container) != null) {
+        View container = findViewById(R.id.top_tracks_container);
+        if (container != null) {
             mTwoPane = true;
 
             if (savedInstanceState == null) {
-                findViewById(R.id.top_tracks_container).setVisibility(View.GONE);
+                // Until we select an artist, hide the top tracks fragment
+                container.setVisibility(View.GONE);
                 TopTracksFragment topTracksFragment = new TopTracksFragment();
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.top_tracks_container, topTracksFragment, TOP_TRACKS_FRAGMENT_TAG)
@@ -100,6 +102,7 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
             TopTracksFragment fragment = new TopTracksFragment();
             fragment.setArguments(args);
 
+            // Now show the top tracks fragment
             findViewById(R.id.top_tracks_container).setVisibility(View.VISIBLE);
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.top_tracks_container, fragment, TOP_TRACKS_FRAGMENT_TAG)
@@ -114,9 +117,11 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
 
     @Override
     public void onSuccessfulArtistSearch(String query) {
-        mActionBar.setSubtitle(getString(R.string.artist_search_prefix) + " \"" + query + "\"");
+        mActionBar.setSubtitle(getString(R.string.artist_search_prefix) + " \"" + query.trim() + "\"");
 
         if (mTwoPane) {
+            // On a successful search, hide the top tracks. Make the user select an artist
+            // being showing the top tracks again.
             findViewById(R.id.top_tracks_container).setVisibility(View.GONE);
         }
     }
