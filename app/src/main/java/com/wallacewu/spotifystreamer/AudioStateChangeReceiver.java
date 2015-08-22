@@ -6,9 +6,13 @@ import android.content.Intent;
 import android.util.Log;
 
 /**
- * Created by Wallace on 8/11/2015.
+ * Local broadcast receiver. This broadcast receiver is responsible for listening to changes to
+ * the media player state (e.g., playing, paused, etc.) and invoking the appropriate callbacks
+ * based on the change in state that occurred.
  */
 public class AudioStateChangeReceiver extends BroadcastReceiver {
+
+    private static final String LOG_TAG = AudioStateChangeReceiver.class.getSimpleName();
 
     static public String ACTION_START_PLAYBACK = "ACTION_START_PLAYBACK";
     static public String ACTION_RESUME_PLAYBACK = "ACTION_RESUME_PLAYBACK";
@@ -34,7 +38,7 @@ public class AudioStateChangeReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d("AudioStateChangeRcv", "Received action: " + intent.getAction());
+        Log.d(LOG_TAG, "Received action: " + intent.getAction());
 
         if (intent.getAction().equals(ACTION_START_PLAYBACK)) {
             mCallback.onStartPlayback();

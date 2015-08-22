@@ -9,7 +9,12 @@ import android.content.ServiceConnection;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Bundle;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.ShareActionProvider;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -28,12 +33,15 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
- * A placeholder fragment containing a simple view.
+ * The fragment containing the audio player.
  */
 public class MediaPlayerFragment extends DialogFragment implements AudioStateChangeReceiver.Callback {
 
-    private static final long PROGRESS_UPDATE_INTERNAL = 1000;
+    private static final long PROGRESS_UPDATE_INTERNAL = 100;
     private static final long PROGRESS_UPDATE_INITIAL_INTERVAL = 100;
+    private static final String BUNDLE_CURRENT_TRACK_IDX = "BUNDLE_CURRENT_TRACK_IDX";
+    private static final String BUNDLE_TRACK_LIST = "BUNDLE_TRACK_LIST";
+    private static final String BUNDLE_ARTIST_NAME = "BUNDLE_ARTIST_NAME";
 
     private AudioService mAudioService;
     private Intent mPlayIntent;
@@ -50,12 +58,16 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
     private TextView mTotalTimeView;
     private ImageButton mPlayButton;
 
+    private ShareActionProvider mShareActionProvider;
+
     private ArrayList<TrackInformation> mTrackList;
     private String mArtistName;
-    private int mStartTrackIdx;
+    private int mTrackIdx;
 
     private AudioStateChangeReceiver mAudioStateReceiver;
 
+    // The code here for updating the seek bar was heavily inspired by the player UI code in this project:
+    // https://github.com/googlesamples/android-UniversalMusicPlayer
     private final ScheduledExecutorService mExecutorService = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> mScheduleFuture;
     private final Handler mHandler = new Handler();
@@ -66,8 +78,28 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
         }
     };
 
+    private void scheduleSeekbarUpdate() {
+        stopSeekbarUpdate();
+        if (!mExecutorService.isShutdown()) {
+            mScheduleFuture = mExecutorService.scheduleAtFixedRate(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            mHandler.post(mUpdateProgressTask);
+                        }
+                    }, PROGRESS_UPDATE_INITIAL_INTERVAL,
+                    PROGRESS_UPDATE_INTERNAL, TimeUnit.MILLISECONDS);
+        }
+    }
+
     public MediaPlayerFragment() {
 
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -78,12 +110,17 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
         Bundle args = getArguments();
 
         mArtistName = getActivity().getString(R.string.unknown_artist_name);
-        mTrackList = null;
 
-        if (args != null) {
+        // We either populate the view based on the savedInstanceState bundle (on orientation)
+        // or when the user has chosen a track to start playing
+        if (savedInstanceState != null) {
+            mTrackIdx = savedInstanceState.getInt(BUNDLE_CURRENT_TRACK_IDX, -1);
+            mTrackList = savedInstanceState.getParcelableArrayList(BUNDLE_TRACK_LIST);
+            mArtistName = savedInstanceState.getString(BUNDLE_ARTIST_NAME);
+        } else if (args != null) {
             mTrackList = args.getParcelableArrayList(TopTracksFragment.INTENT_EXTRA_TRACK_LIST);
             mArtistName = args.getString(TopTracksFragment.INTENT_EXTRA_ARTIST_NAME, mArtistName);
-            mStartTrackIdx = args.getInt(TopTracksFragment.INTENT_EXTRA_TRACK_IDX, -1);
+            mTrackIdx = args.getInt(TopTracksFragment.INTENT_EXTRA_TRACK_IDX, -1);
         }
 
         mArtistTextView = (TextView) rootView.findViewById(R.id.player_artist_name);
@@ -98,7 +135,6 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
 
         mElapsedTimeView.setText(getActivity().getString(R.string.time_placeholder));
         mTotalTimeView.setText(getActivity().getString(R.string.time_placeholder));
-
 
         ImageButton previousButton = (ImageButton) rootView.findViewById(R.id.player_button_prev);
         previousButton.setOnClickListener(new View.OnClickListener() {
@@ -151,12 +187,15 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
                 AudioService.AudioBinder binder = (AudioService.AudioBinder) service;
                 mAudioService = binder.getService();
 
-
+                // When we're connected to the audio streaming service, we may already be
+                // preparing/streaming audio. In this case, we will see if we need to update
+                // the track. This is to handle the case where the user selects a new track from
+                // the top tracks list (view) and the player is rebinding to the existing service.
                 if (mAudioService.isAudioTrackUrlValid()) {
-                    if (!mAudioService.getCurrentTrackUrl().equals(mTrackList.get(mStartTrackIdx).trackPreviewUrl)) {
+                    if (!mAudioService.getCurrentTrackUrl().equals(mTrackList.get(mTrackIdx).trackPreviewUrl)) {
                         mAudioService.setTrackInfoList(mTrackList);
                         mAudioService.setArtistName(mArtistName);
-                        mAudioService.prepareTrack(mStartTrackIdx);
+                        mAudioService.prepareTrack(mTrackIdx);
                     }
 
                     mSeekBar.setMax(mAudioService.getTrackTotalDuration());
@@ -166,7 +205,7 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
                 } else {
                     mAudioService.setTrackInfoList(mTrackList);
                     mAudioService.setArtistName(mArtistName);
-                    mAudioService.prepareTrack(mStartTrackIdx);
+                    mAudioService.prepareTrack(mTrackIdx);
                 }
 
                 mAudioBound = true;
@@ -188,11 +227,11 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
         super.onActivityCreated(savedInstanceState);
 
         mPlaybackIntentFilter = new IntentFilter();
-        mPlaybackIntentFilter.addAction("ACTION_START_PLAYBACK");
-        mPlaybackIntentFilter.addAction("ACTION_PAUSE_PLAYBACK");
-        mPlaybackIntentFilter.addAction("ACTION_STOP_PLAYBACK");
-        mPlaybackIntentFilter.addAction("ACTION_ONPREPARED_PLAYBACK");
-        mPlaybackIntentFilter.addAction("ACTION_RESUME_PLAYBACK");
+        mPlaybackIntentFilter.addAction(AudioStateChangeReceiver.ACTION_START_PLAYBACK);
+        mPlaybackIntentFilter.addAction(AudioStateChangeReceiver.ACTION_PAUSE_PLAYBACK);
+        mPlaybackIntentFilter.addAction(AudioStateChangeReceiver.ACTION_STOP_PLAYBACK);
+        mPlaybackIntentFilter.addAction(AudioStateChangeReceiver.ACTION_ONPREPARED_PLAYBACK);
+        mPlaybackIntentFilter.addAction(AudioStateChangeReceiver.ACTION_RESUME_PLAYBACK);
 
         if (mPlayIntent == null) {
             mPlayIntent = new Intent(getActivity(), AudioService.class);
@@ -223,12 +262,43 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        int idx = (mAudioBound) ? mAudioService.getCurrentTrackIdx() : -1;
+        outState.putInt(BUNDLE_CURRENT_TRACK_IDX, idx);
+        outState.putParcelableArrayList(BUNDLE_TRACK_LIST, mTrackList);
+        outState.putString(BUNDLE_ARTIST_NAME, mArtistName);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
 
         if (getActivity().isFinishing()) {
             getActivity().stopService(mPlayIntent);
         }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        super.onCreateOptionsMenu(menu, inflater);
+        inflater.inflate(R.menu.mediaplayerfragment, menu);
+
+        MenuItem menuItem = menu.findItem(R.id.action_share);
+        mShareActionProvider = (ShareActionProvider) MenuItemCompat.getActionProvider(menuItem);
+
+        updateShareTrackIntent();
+    }
+
+    private void updateShareTrackIntent() {
+        if (!mAudioBound)
+            return;
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, mAudioService.getCurrentTrackUrl());
+        mShareActionProvider.setShareIntent(shareIntent);
     }
 
     private void updateProgress() {
@@ -260,20 +330,6 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
         mTrackTextView.setText(trackName);
     }
 
-    private void scheduleSeekbarUpdate() {
-        stopSeekbarUpdate();
-        if (!mExecutorService.isShutdown()) {
-            mScheduleFuture = mExecutorService.scheduleAtFixedRate(
-                    new Runnable() {
-                        @Override
-                        public void run() {
-                            mHandler.post(mUpdateProgressTask);
-                        }
-                    }, PROGRESS_UPDATE_INITIAL_INTERVAL,
-                    PROGRESS_UPDATE_INTERNAL, TimeUnit.MILLISECONDS);
-        }
-    }
-
     private void stopSeekbarUpdate() {
         if (mScheduleFuture != null) {
             mScheduleFuture.cancel(false);
@@ -284,6 +340,7 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
     public void onPreparedPlayback() {
         updatePlayerTrackInfo(mAudioService.getCurrentTrackIdx());
         mSeekBar.setProgress(0);
+        updateShareTrackIntent();
     }
 
     @Override
@@ -308,6 +365,8 @@ public class MediaPlayerFragment extends DialogFragment implements AudioStateCha
 
     @Override
     public void onStopPlayback() {
-
+        mPlayButton.setImageDrawable(getActivity().getResources().getDrawable(android.R.drawable.ic_media_play));
+        stopSeekbarUpdate();
+        mSeekBar.setProgress(0);
     }
 }

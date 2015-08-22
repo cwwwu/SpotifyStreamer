@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 /**
- * Created by Wallace on 7/15/2015.
+ * This service's responsibility is to stream audio in the background.
  */
 public class AudioService extends Service implements MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnCompletionListener {
 
@@ -162,9 +162,9 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
                 .setLargeIcon(image)
                 .setOngoing(true)
                 .setShowWhen(false)
-                .addAction(generateNotificationAction(android.R.drawable.ic_media_previous, "Previous", ACTION_PREV))
+                .addAction(generateNotificationAction(android.R.drawable.ic_media_previous, getString(R.string.action_prev), ACTION_PREV))
                 .addAction(playbackAction)
-                .addAction(generateNotificationAction(android.R.drawable.ic_media_next, "Next", ACTION_NEXT))
+                .addAction(generateNotificationAction(android.R.drawable.ic_media_next, getString(R.string.action_next), ACTION_NEXT))
                 .setStyle(mediaStyle);
 
         mediaStyle.setShowActionsInCompactView(0, 1, 2);
@@ -223,7 +223,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
                 }
                 break;
             case STATE_PAUSED:
-                broadcastAudioState("ACTION_PAUSE_PLAYBACK");
+                broadcastAudioState(AudioStateChangeReceiver.ACTION_PAUSE_PLAYBACK);
                 break;
         }
 
@@ -238,7 +238,7 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
             mMediaPlayer.setDataSource(mTracks.get(trackIdx).trackPreviewUrl);
         }
         catch (IOException e) {
-            Log.e("REPLACE ME", "Error setting data source", e);
+            Log.e(LOG_TAG, "Error setting data source", e);
         }
 
         mMediaPlayer.prepareAsync();
@@ -277,13 +277,13 @@ public class AudioService extends Service implements MediaPlayer.OnPreparedListe
 
     public void pausePlayback() {
         mMediaPlayer.pause();
-        createNotification(generateNotificationAction(android.R.drawable.ic_media_play, "Play", ACTION_PLAY));
+        createNotification(generateNotificationAction(android.R.drawable.ic_media_play, getString(R.string.action_play), ACTION_PLAY));
         updateAudioState(STATE_PAUSED);
     }
 
     public void playOrResumeTrack() {
         mMediaPlayer.start();
-        createNotification(generateNotificationAction(android.R.drawable.ic_media_pause, "Pause", ACTION_PAUSE));
+        createNotification(generateNotificationAction(android.R.drawable.ic_media_pause, getString(R.string.action_pause), ACTION_PAUSE));
         updateAudioState(STATE_PLAYING);
     }
 

@@ -158,6 +158,9 @@ public class TopTracksFragment extends Fragment {
 
         @Override
         protected void onPreExecute() {
+            if (!Utils.hasInternetConnectivity(getActivity()))
+                Utils.showNetworkConnectPrompt(getActivity());
+
             mProgressBar.setVisibility(View.VISIBLE);
         }
 
@@ -204,21 +207,7 @@ public class TopTracksFragment extends Fragment {
             mProgressBar.setVisibility(View.GONE);
 
             if (tracks == null && mStatus == RetrofitError.Kind.NETWORK) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                builder.setMessage(R.string.network_connectivity_message)
-                        .setPositiveButton(R.string.open_network_settings, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
-                            }
-                        })
-                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-
-                            }
-                        })
-                        .create().show();
+                Utils.showNetworkConnectPrompt(getActivity());
                 return;
             }
 

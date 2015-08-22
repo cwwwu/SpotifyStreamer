@@ -1,6 +1,5 @@
 package com.wallacewu.spotifystreamer;
 
-import android.app.FragmentManager;
 import android.content.Intent;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
@@ -20,9 +19,9 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
     private String  mSelectedArtist;
     private ActionBar mActionBar;
 
-    private ArtistSearchFragment mSearchFragment;
     private MediaPlayerFragment mMediaPlayerFragment;
     static final private String TOP_TRACKS_FRAGMENT_TAG = "TOP_TRACKS_TAG";
+    static final private String MEDIA_PLAYER_FRAGMENT_TAG = "MEDIA_PLAYER_FRAGMENT_TAG";
     static final private String BUNDLE_SELECTED_ARTIST = "SELECTED_ARTIST";
 
     @Override
@@ -55,16 +54,6 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
         } else {
             mTwoPane = false;
         }
-
-        FragmentManager fragmentManager = getFragmentManager();
-        mSearchFragment = (ArtistSearchFragment) fragmentManager.findFragmentById(R.id.fragment_artist_search);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        // store the data in the search artist fragment
-        //mSearchFragment.setData(collectMyLoadedData())
     }
 
     @Override
@@ -76,7 +65,6 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        // Add menu later, as needed
         getMenuInflater().inflate(R.menu.main, menu);
 
         return true;
@@ -145,6 +133,6 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
         }
         mMediaPlayerFragment.setArguments(args);
 
-        mMediaPlayerFragment.show(getSupportFragmentManager(), "bla_bla_bla");
+        mMediaPlayerFragment.show(getSupportFragmentManager(), MEDIA_PLAYER_FRAGMENT_TAG);
     }
 }

@@ -12,7 +12,10 @@ import com.wallacewu.spotifystreamer.data.TrackInformation;
 
 import java.util.ArrayList;
 
-
+/**
+ * The top tracks activity. This activity is used when the app is operating in single-pane mode.
+ * The user is presented with the top tracks for a particular artist.
+ */
 public class TopTracksActivity extends ActionBarActivity implements TopTracksFragment.Callback {
 
     private String  mSelectedArtist;
@@ -45,23 +48,9 @@ public class TopTracksActivity extends ActionBarActivity implements TopTracksFra
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        //mTracksFragement.setData(collectMyLoadedData());
-    }
-
-    @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putString(BUNDLE_SELECTED_ARTIST, mSelectedArtist);
         super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        // Add menu later, as needed
-        //getMenuInflater().inflate(R.menu.menu_top_tracks, menu);
-        return true;
     }
 
     @Override

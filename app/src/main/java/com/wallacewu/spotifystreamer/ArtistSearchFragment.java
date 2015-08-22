@@ -123,7 +123,7 @@ public class ArtistSearchFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(final Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.menu_artist_search, menu);
+        inflater.inflate(R.menu.artistsearchfragment, menu);
 
         mSearchViewMenuItem = menu.findItem(R.id.search_artist);
         mSearchView = (SearchView) mSearchViewMenuItem.getActionView();
@@ -231,6 +231,8 @@ public class ArtistSearchFragment extends Fragment {
 
         @Override
         protected void onPreExecute() {
+            if (!Utils.hasInternetConnectivity(getActivity()))
+                Utils.showNetworkConnectPrompt(getActivity());
             mProgressBar.setVisibility(View.VISIBLE);
         }
 
@@ -275,21 +277,7 @@ public class ArtistSearchFragment extends Fragment {
             // settings are okay. The user can go to the wireless settings if he/she opts to do so
             // from the dialog.
             if (artists == null && mStatus == RetrofitError.Kind.NETWORK) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                builder.setMessage(R.string.network_connectivity_message)
-                        .setPositiveButton(R.string.open_network_settings, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
-                            }
-                        })
-                        .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-
-                            }
-                        })
-                        .create().show();
+                Utils.showNetworkConnectPrompt(getActivity());
                 return;
             }
 

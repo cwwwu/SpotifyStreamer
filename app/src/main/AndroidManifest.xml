@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -42,7 +43,7 @@
         </activity>
         <activity
             android:name=".SettingsActivity"
-            android:label="@string/activity_settings_title"
+            android:label="@string/action_settings"
             android:parentActivityName=".MainActivity"
             android:theme="@style/SettingsTheme" >
             <meta-data

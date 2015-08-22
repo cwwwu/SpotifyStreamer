@@ -1,13 +1,46 @@
 package com.wallacewu.spotifystreamer;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 
 /**
- * Created by Wallace on 8/7/2015.
+ * This class contains a set of miscellaneous helper functions.
  */
 public class Utils {
+
+    public static boolean hasInternetConnectivity(Context context) {
+        // code snippet from http://developer.android.com/training/monitoring-device-state/connectivity-monitoring.html#DetermineConnection
+        ConnectivityManager cm =
+                (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+        return (activeNetwork != null && activeNetwork.isConnectedOrConnecting());
+    }
+
+    public static void showNetworkConnectPrompt(final Context context) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setMessage(R.string.network_connectivity_message)
+                .setPositiveButton(R.string.open_network_settings, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        context.startActivity(new Intent(Settings.ACTION_WIRELESS_SETTINGS));
+                    }
+                })
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                })
+                .create().show();
+    }
 
     public static String formatTimestamp(int millisec) {
         int seconds = millisec / 1000;

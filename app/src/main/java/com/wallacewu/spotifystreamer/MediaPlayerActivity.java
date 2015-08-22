@@ -1,12 +1,9 @@
 package com.wallacewu.spotifystreamer;
 
-import android.app.PendingIntent;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 
 import com.wallacewu.spotifystreamer.data.TrackInformation;
 
@@ -49,14 +46,6 @@ public class MediaPlayerActivity extends ActionBarActivity {
                     .replace(R.id.player_container, mediaPlayerFragment, MEDIA_PLAYER_FRAGMENT_TAG)
                     .commit();
         }
-    }
-
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        //getMenuInflater().inflate(R.menu.menu_media_player, menu);
-        return true;
     }
 
     @Override

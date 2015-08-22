@@ -10,7 +10,8 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 
 /**
- * Created by wallace on 2015-08-19.
+ * The activity for settings. Most of the code was adopted from Udacity's Sunshine app.
+ * (https://github.com/udacity/Sunshine)
  */
 public class SettingsActivity extends PreferenceActivity implements Preference.OnPreferenceChangeListener {
     @Override
@@ -27,8 +28,7 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
         // Set the listener to watch for value changes.
         preference.setOnPreferenceChangeListener(this);
 
-        // Trigger the listener immediately with the preference's
-        // current value.
+        // Trigger the listener immediately with the preference's current value.
         onPreferenceChange(preference,
                 PreferenceManager
                         .getDefaultSharedPreferences(preference.getContext())

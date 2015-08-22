@@ -1,31 +1,41 @@
 <resources>
     <string name="app_name">Spotify Streamer</string>
-    <string name="action_settings">Settings</string>
+
+    <!-- Artist Search -->
     <string name="action_bar_prompt">Search for your favourite artist</string>
     <string name="artist_search_prefix">Showing results for</string>
     <string name="artist_search_hint">Enter name of artist</string>
     <string name="artist_search_title">Search artist</string>
-    <string name="title_activity_top_tracks">Top 10 Tracks</string>
 
     <string name="artist_not_found">Artist(s) not found. Please try again</string>
+
+    <!-- Top Tracks -->
+    <string name="title_activity_top_tracks">Top 10 Tracks</string>
+
     <string name="no_tracks_found">No tracks found!</string>
 
+    <!-- Network connectivity prompt -->
     <string name="network_connectivity_message">Could not access network. Check wireless settings.</string>
     <string name="open_network_settings">Open wireless settings</string>
     <string name="cancel">Cancel</string>
-    <string name="title_activity_media_player">Now Streaming Preview</string>
 
+    <!-- Audio player -->
+    <string name="title_activity_media_player">Now Streaming Preview</string>
     <string name="time_placeholder">--:--</string>
+
+    <!-- Notification action titles -->
+    <string name="action_play">Play</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_prev">Previous</string>
+    <string name="action_next">Next</string>
 
     <!-- Default strings to use for player if information is unavailable -->
     <string name="unknown_album_name">No album name</string>
     <string name="unknown_track_name">No track selected</string>
     <string name="unknown_artist_name">No artist name</string>
 
-    <string name="hello_world">Hello world!</string>
-
     <!-- Settings -->
-    <string name="activity_settings_title">Settings</string>
+    <string name="action_settings">Settings</string>
     <string name="pref_country_key">pref_country_key</string>
     <string name="pref_notification_key">pref_notification_key</string>
     <string name="pref_country_title">Set Country</string>
@@ -33,6 +43,8 @@
 
     <string name="pref_notification_switch_on">Enabled</string>
     <string name="pref_notification_switch_off">Disabled</string>
+
+    <string name="action_share">Share track URL</string>
 
     <!-- List of countries that Spotify is currently available were
          identified from this website:
