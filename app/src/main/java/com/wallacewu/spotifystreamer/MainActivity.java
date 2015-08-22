@@ -1,6 +1,7 @@
 package com.wallacewu.spotifystreamer;
 
 import android.content.Intent;
+import android.os.Build;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -18,6 +19,7 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
     private boolean mTwoPane;
     private String  mSelectedArtist;
     private ActionBar mActionBar;
+    private MenuItem mNowPlayingMenuItem;
 
     private MediaPlayerFragment mMediaPlayerFragment;
     static final private String TOP_TRACKS_FRAGMENT_TAG = "TOP_TRACKS_TAG";
@@ -65,10 +67,18 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
     }
 
     @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem nowPlayingItem = menu.findItem(R.id.action_now_playing);
+        nowPlayingItem.setVisible(mMediaPlayerFragment != null);
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
 
+        mNowPlayingMenuItem = menu.findItem(R.id.action_now_playing);
         return true;
     }
 
@@ -84,6 +94,10 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
             Intent settingsIntent = new Intent(this, SettingsActivity.class);
             startActivity(settingsIntent);
             return true;
+        }
+
+        if (id == R.id.action_now_playing) {
+            mMediaPlayerFragment.show(getSupportFragmentManager(), MEDIA_PLAYER_FRAGMENT_TAG);
         }
 
         return super.onOptionsItemSelected(item);
@@ -132,6 +146,14 @@ public class MainActivity extends ActionBarActivity implements ArtistSearchFragm
         args.putString(TopTracksFragment.INTENT_EXTRA_ARTIST_NAME, artistName);
         args.putInt(TopTracksFragment.INTENT_EXTRA_TRACK_IDX, startTrackIdx);
         args.putParcelableArrayList(TopTracksFragment.INTENT_EXTRA_TRACK_LIST, tracks);
+
+        mNowPlayingMenuItem.setVisible(true);
+        if( Build.VERSION.SDK_INT>= Build.VERSION_CODES.ICE_CREAM_SANDWICH ) {
+            invalidateOptionsMenu();
+        } else {
+            supportInvalidateOptionsMenu();
+        }
+
 
         if (mMediaPlayerFragment == null) {
             mMediaPlayerFragment = new MediaPlayerFragment();

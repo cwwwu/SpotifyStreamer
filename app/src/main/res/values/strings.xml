@@ -36,6 +36,7 @@
 
     <!-- Settings -->
     <string name="action_settings">Settings</string>
+    <string name="action_now_playing">Now Playing</string>
     <string name="pref_country_key">pref_country_key</string>
     <string name="pref_notification_key">pref_notification_key</string>
     <string name="pref_country_title">Set Country</string>
